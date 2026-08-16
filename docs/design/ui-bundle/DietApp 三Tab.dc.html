@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics=""><meta name="design_doc_mode" content="canvas"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet"><style>body{margin:0;background:#EFF2EC}a{color:#5E9C7E}a:hover{color:#4A8168}</style></helmet>
+<section style="padding:48px 52px 56px;font-family:'Noto Sans SC',system-ui,sans-serif;color:#25322B">
+  <div style="display:flex;align-items:flex-start;gap:26px;flex-wrap:wrap;margin-bottom:34px">
+    <div style="max-width:560px">
+      <div style="font-size:11px;letter-spacing:3px;color:#8A998F;font-weight:500">减脂 PWA · MVP · 手机竖屏 390×844</div>
+      <h1 style="font-size:34px;font-weight:700;letter-spacing:-.8px;margin:8px 0 12px">三个 Tab 的页面设计</h1>
+      <p style="font-size:13.5px;line-height:1.85;color:#5C6B62;margin:0;text-wrap:pretty">按 PRD §4.2 / SPEC §2 的组件职责搭建：记录 = 对话录入 + 今日明细 + 常吃库，看板 = 双联动趋势图 + 今日详情 + 减脂计划 + 身体维度 + 运动录入，我的 = BMR + 基础信息 + 身体维度 + 握拳尺寸。三个屏都可点击，底部 Tab 栏可互相切换。</p>
+    </div>
+    <div style="background:#fff;border-radius:18px;padding:16px 18px;box-shadow:0 1px 2px rgba(35,48,42,.05);min-width:250px">
+      <div style="font-size:11px;letter-spacing:2px;color:#8A998F;margin-bottom:11px">视觉方向</div>
+      <div style="display:flex;gap:7px;margin-bottom:11px">
+        <span style="width:30px;height:30px;border-radius:9px;background:#2E8B62;display:block"></span>
+        <span style="width:30px;height:30px;border-radius:9px;background:{{ intakeColor }};display:block"></span>
+        <span style="width:30px;height:30px;border-radius:9px;background:{{ carbColor }};display:block"></span>
+        <span style="width:30px;height:30px;border-radius:9px;background:{{ proteinColor }};display:block"></span>
+        <span style="width:30px;height:30px;border-radius:9px;background:{{ fatColor }};display:block"></span>
+        <span style="width:30px;height:30px;border-radius:9px;background:{{ fiberColor }};display:block"></span>
+        <span style="width:30px;height:30px;border-radius:9px;background:#EDF2E9;border:1px solid rgba(20,30,25,.16);display:block"></span>
+      </div>
+      <div style="font-size:11.5px;line-height:1.8;color:#5C6B62">主色深植物绿，数据层五色分工：摄入=红，碳水=青，蛋白=草绿，脂肪=橙，纤维=紫（均可在 Tweaks 面板调整），浅底衬深色文字、大留白、22px 圆角卡片。<br>数字 DM Sans / 中文 Noto Sans SC。</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:baseline;gap:9px">
+        <span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;background:#25322B;color:#fff;border-radius:5px;padding:3px 7px">TAB 1</span>
+        <span style="font-size:13px;font-weight:500">记录 · 每日交互中心</span>
+      </div>
+      <dc-import name="DietPhone" intake-color="{{ intakeColor }}" carb-color="{{ carbColor }}" protein-color="{{ proteinColor }}" fat-color="{{ fatColor }}" fiber-color="{{ fiberColor }}" tab="record" hint-size="390px,844px"></dc-import>
+      <div style="font-size:11.5px;line-height:1.7;color:#7C8A82;max-width:390px">对话解析卡区分数据来源：中国成分表直接写入，网络估算带「可能不准」并需确认。今日明细按餐次分组，输入条常驻。</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:baseline;gap:9px">
+        <span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;background:#25322B;color:#fff;border-radius:5px;padding:3px 7px">TAB 2</span>
+        <span style="font-size:13px;font-weight:500">看板 · 复盘中心</span>
+      </div>
+      
+      <dc-import name="DietPhone" intake-color="{{ intakeColor }}" carb-color="{{ carbColor }}" protein-color="{{ proteinColor }}" fat-color="{{ fatColor }}" fiber-color="{{ fiberColor }}" tab="board" hint-size="390px,844px"></dc-import><div style="font-size:11.5px;line-height:1.7;color:#7C8A82;max-width:390px">7 / 14 / 30 天窗口同时驱动两张柱图；灰色自柱顶向下扣减代表运动消耗。身体维度可多选折线。</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:baseline;gap:9px">
+        <span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;background:#25322B;color:#fff;border-radius:5px;padding:3px 7px">TAB 3</span>
+        <span style="font-size:13px;font-weight:500">我的 · 设置中心</span>
+      </div>
+      <dc-import name="DietPhone" intake-color="{{ intakeColor }}" carb-color="{{ carbColor }}" protein-color="{{ proteinColor }}" fat-color="{{ fatColor }}" fiber-color="{{ fiberColor }}" tab="mine" hint-size="390px,844px"></dc-import>
+      <div style="font-size:11.5px;line-height:1.7;color:#7C8A82;max-width:390px">「体脂率优先」开关即时切换 BMR 公式与说明文案（1303 ↔ 1324）。目标体重不在此页，收敛在看板的减脂计划。</div>
+    </div>
+  </div>
+
+  <p style="margin:34px 0 0;font-size:12px;color:#8A998F;line-height:1.8">可以继续说：「记录页的对话卡再轻一点」·「看板换成上下滚动的分段卡片」·「给我另外两版配色」</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){
+    return {
+      intakeColor: '#E88472',
+      carbColor: '#6AB4B4',
+      proteinColor: '#A3CC7E',
+      fatColor: '#FFBA80',
+      fiberColor: '#B49AD4'
+    };
+  }
+}
+</script>
+</body>
+</html>

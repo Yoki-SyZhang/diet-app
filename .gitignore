@@ -1,0 +1,36 @@
+# --- Python / FastAPI backend ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Node / frontend ---
+node_modules/
+dist/
+build/
+.vite/
+*.tsbuildinfo
+
+# --- 真实数据(单文件 SQLite,绝不进 git) ---
+*.db
+*.sqlite
+*.sqlite3
+backend/data/
+
+# --- 密钥/环境变量 ---
+.env
+.env.*
+!.env.example
+
+# --- 编辑器/系统 ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- 日志 ---
+*.log

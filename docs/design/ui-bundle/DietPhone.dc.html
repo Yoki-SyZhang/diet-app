@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box}a{color:#2E8B62}a:hover{color:#22704E}::-webkit-scrollbar{width:0;height:0}</style></helmet>
+<div style="position:relative;width:390px;height:844px;border-radius:44px;overflow:hidden;background:#EDF2E9;font-family:'Noto Sans SC',system-ui,sans-serif;color:#141E19;box-shadow:0 30px 70px rgba(35,48,42,.18),0 0 0 1px rgba(35,48,42,.07);display:flex;flex-direction:column">
+
+  <div style="position:absolute;inset:0;background:radial-gradient(120% 60% at 15% -8%, #E7F1E7 0%, rgba(231,241,231,0) 62%),radial-gradient(90% 45% at 100% 4%, #E6EFF4 0%, rgba(230,239,244,0) 60%);pointer-events:none"></div>
+
+  <div style="position:relative;display:flex;align-items:center;justify-content:space-between;padding:14px 26px 2px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;letter-spacing:.2px;color:#141E19">
+    <span>9:41</span>
+    <div style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:9px;border-radius:2px;border:1px solid rgba(37,50,43,.5);display:inline-block"></span><span style="width:22px;height:10px;border-radius:3px;border:1px solid rgba(37,50,43,.5);display:inline-block"></span></div>
+  </div>
+
+  <div style="position:relative;display:flex;align-items:flex-end;justify-content:space-between;padding:8px 20px 12px">
+    <div>
+      <div style="font-size:11px;letter-spacing:2.5px;color:#657469;font-weight:500">{{ tabKicker }}</div>
+      <div style="{{ titleStyle }}">{{ tabTitle }}</div>
+    </div>
+    <div style="{{ dateStyle }}">8月15日 周六</div>
+  </div>
+
+  <div style="position:relative;flex:1;overflow-y:auto;padding:0 16px 104px">
+
+    <sc-if value="{{ isRecord }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="background:#FFFFFF;border-radius:24px;box-shadow:0 1px 2px rgba(35,48,42,.05);overflow:hidden">
+          <div style="display:flex;align-items:stretch;gap:12px;padding:12px 16px 10px">
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:baseline;gap:6px">
+                <span style="font-family:'DM Sans',sans-serif;font-size:26px;font-weight:700;letter-spacing:-1px">1210</span>
+                <span style="font-size:11.5px;color:#657469">/ 1714 kcal</span>
+              </div>
+              <div style="height:5px;border-radius:99px;background:#E2E9DF;margin-top:5px;overflow:hidden;display:flex">
+                <div style="width:70.6%;background:{{ cIntake }};border-radius:99px"></div>
+              </div>
+              <div style="display:flex;flex-wrap:nowrap;gap:8px;margin-top:6px;font-size:9.5px;color:#657469;white-space:nowrap">
+                <span><i style="display:inline-block;width:5px;height:5px;border-radius:1.5px;background:{{ cCarb }};margin-right:3px"></i>碳水 <b style="font-family:'DM Sans',sans-serif;color:#141E19;font-weight:500">118g</b></span>
+                <span><i style="display:inline-block;width:5px;height:5px;border-radius:1.5px;background:{{ cProtein }};margin-right:3px"></i>蛋白 <b style="font-family:'DM Sans',sans-serif;color:#141E19;font-weight:500">50g</b></span>
+                <span><i style="display:inline-block;width:5px;height:5px;border-radius:1.5px;background:{{ cFat }};margin-right:3px"></i>脂肪 <b style="font-family:'DM Sans',sans-serif;color:#141E19;font-weight:500">60g</b></span>
+                <span><i style="display:inline-block;width:5px;height:5px;border-radius:1.5px;background:{{ cFiber }};margin-right:3px"></i>纤维 <b style="font-family:'DM Sans',sans-serif;color:#141E19;font-weight:500">12g</b></span>
+              </div>
+            </div>
+            <div style="flex:none;text-align:right;padding-left:14px;border-left:1px solid rgba(20,30,25,.13);display:flex;flex-direction:column;justify-content:center;gap:3px">
+              <div style="font-family:'DM Sans',sans-serif;font-size:10px;color:#657469;white-space:nowrap">8月15日 周六</div>
+              <div style="display:flex;align-items:baseline;gap:5px;justify-content:flex-end;white-space:nowrap"><span style="font-size:10px;color:#657469;white-space:nowrap">今日 Δ</span><span style="font-family:'DM Sans',sans-serif;font-size:17px;font-weight:700;color:#2E8B62">−504</span></div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:6px;background:#E2E9DF;border-radius:13px;padding:4px;margin:0 14px">
+            <sc-for list="{{ panes }}" as="p" hint-placeholder-count="2">
+              <button onClick="{{ p.on }}" style="{{ p.style }}">{{ p.label }}</button>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:10px 14px 12px">
+              <div style="display:grid;grid-template-columns:1fr 44px 30px 22px 22px 22px 22px;gap:5px;align-items:center;padding:0 4px 5px;font-size:9px;color:#859389;font-family:'DM Sans',sans-serif;letter-spacing:.3px">
+                <span>食物</span><span style="text-align:right">数量</span><span style="text-align:right">kcal</span>
+                <span style="text-align:right">碳</span><span style="text-align:right">蛋</span><span style="text-align:right">脂</span><span style="text-align:right">纤</span>
+              </div>
+              <sc-for list="{{ meals }}" as="m" hint-placeholder-count="4">
+                <div style="margin-bottom:3px">
+                  <button onClick="{{ m.on }}" style="{{ m.headStyle }}">
+                    <span style="display:flex;align-items:center;gap:6px;min-width:0"><span style="{{ m.caret }}"></span><span style="font-size:10.5px;color:#4C5B52;letter-spacing:1px">{{ m.label }}</span></span>
+                    <span style="text-align:right;font-size:9.5px;color:#93A199;white-space:nowrap">{{ m.count }}</span>
+                    <span style="text-align:right;font-family:'DM Sans',sans-serif;font-size:11px;color:#3E4C44">{{ m.kcal }}</span>
+                    <span style="text-align:right;font-family:'DM Sans',sans-serif;font-size:10px;color:#7C8A82">{{ m.c }}</span>
+                    <span style="text-align:right;font-family:'DM Sans',sans-serif;font-size:10px;color:#7C8A82">{{ m.p }}</span>
+                    <span style="text-align:right;font-family:'DM Sans',sans-serif;font-size:10px;color:#7C8A82">{{ m.f }}</span>
+                    <span style="text-align:right;font-family:'DM Sans',sans-serif;font-size:10px;color:#7C8A82">{{ m.fb }}</span>
+                  </button>
+                  <sc-if value="{{ m.open }}" hint-placeholder-val="{{ false }}">
+                    <div>
+                      <sc-for list="{{ m.items }}" as="it" hint-placeholder-count="3">
+                        <div style="display:grid;grid-template-columns:1fr 44px 30px 22px 22px 22px 22px;gap:5px;align-items:center;padding:3px 4px;font-size:11.5px;border-bottom:1px solid rgba(35,48,42,.05)">
+                          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ it.name }} <sc-if value="{{ it.est }}" hint-placeholder-val="{{ false }}"><i style="font-style:normal;font-size:8.5px;color:#B98A5E;background:#F7EDE1;border-radius:99px;padding:1px 5px">估</i></sc-if></span>
+                          <span style="text-align:right;font-family:'DM Sans',sans-serif;font-size:10px;color:#657469">{{ it.qty }}</span>
+                          <span style="text-align:right;font-family:'DM Sans',sans-serif;font-size:11px">{{ it.kcal }}</span>
+                          <span style="text-align:right;font-family:'DM Sans',sans-serif;font-size:10px;color:#7C8A82">{{ it.c }}</span>
+                          <span style="text-align:right;font-family:'DM Sans',sans-serif;font-size:10px;color:#7C8A82">{{ it.p }}</span>
+                          <span style="text-align:right;font-family:'DM Sans',sans-serif;font-size:10px;color:#7C8A82">{{ it.f }}</span>
+                          <span style="text-align:right;font-family:'DM Sans',sans-serif;font-size:10px;color:#7C8A82">{{ it.fb }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+
+          <sc-if value="{{ isFav }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:4px 16px 14px">
+              <div style="display:flex;align-items:center;gap:9px;background:#EDF2E9;border-radius:11px;padding:7px 12px;margin-top:10px">
+                <span style="width:11px;height:11px;border:1.6px solid #859389;border-radius:50%;display:block"></span>
+                <span style="font-size:11.5px;color:#859389">搜索常吃食物 · 共 24 项</span>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 0 8px;border-bottom:1px solid rgba(20,30,25,.10)">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:12.5px">我的燕麦碗 <span style="font-size:10px;color:#2E8B62;background:#D4EADC;border-radius:99px;padding:2px 7px;margin-left:4px">食谱 · 份</span></div>
+                  <div style="font-size:10px;color:#657469;margin-top:3px">燕麦片 40g · 牛奶 200g · 香蕉 80g</div>
+                </div>
+                <span style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500">385<span style="font-size:10px;color:#657469">/份</span></span>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 0 8px;border-bottom:1px solid rgba(20,30,25,.10)">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:12.5px">鸡胸肉 <span style="font-size:10px;color:#657469;background:#E2E9DF;border-radius:99px;padding:2px 7px;margin-left:4px">生 · 克</span></div>
+                  <div style="font-size:10px;color:#657469;margin-top:3px">碳 0 / 蛋 24 / 脂 1.9 g · 中国成分表</div>
+                </div>
+                <span style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500">118<span style="font-size:10px;color:#657469">/100g</span></span>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 0 8px;border-bottom:1px solid rgba(20,30,25,.10)">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:12.5px">无糖豆浆 <span style="font-size:10px;color:#657469;background:#E2E9DF;border-radius:99px;padding:2px 7px;margin-left:4px">熟 · 克</span></div>
+                  <div style="font-size:10px;color:#657469;margin-top:3px">碳 1.1 / 蛋 3.0 / 脂 1.6 g · 中国成分表</div>
+                </div>
+                <span style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500">31<span style="font-size:10px;color:#657469">/100g</span></span>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 0 2px">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:12.5px">红烧肉 <span style="font-size:10px;color:#657469;background:#E2E9DF;border-radius:99px;padding:2px 7px;margin-left:4px">熟 · 克</span> <span style="font-size:10px;color:#B98A5E;background:#F7EDE1;border-radius:99px;padding:2px 7px;margin-left:2px">网络估算</span></div>
+                  <div style="font-size:10px;color:#657469;margin-top:3px">碳 2.7 / 蛋 12 / 脂 21 g · 可能不准</div>
+                </div>
+                <span style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500">250<span style="font-size:10px;color:#657469">/100g</span></span>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin:22px 0 2px">
+          <span style="font-size:14px;font-weight:700">对话录入</span>
+          <span style="font-size:11px;color:#657469">对话历史保留 7 天</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:18px">
+          <div style="align-self:flex-start;max-width:82%;background:#FFFFFF;border-radius:18px 18px 18px 6px;padding:9px 12px;font-size:12px;line-height:1.55;box-shadow:0 1px 2px rgba(35,48,42,.05)">早上好，今天中午吃了什么？可以直接说，也可以拍张照。</div>
+          <div style="align-self:flex-end;max-width:82%;background:#DDEBDF;border-radius:18px 18px 6px 18px;padding:9px 12px;font-size:12px;line-height:1.55">中午一碗米饭，红烧肉两块，还有一份清炒西兰花</div>
+
+          <div style="background:#FFFFFF;border-radius:20px;padding:14px;box-shadow:0 1px 2px rgba(35,48,42,.05);border:1px solid rgba(94,156,126,.18)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">
+              <div style="display:flex;align-items:baseline;gap:8px;min-width:0">
+                <span style="font-size:10px;letter-spacing:1.5px;color:#657469;font-weight:500;white-space:nowrap">解析结果 · 午餐</span>
+                <span style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;white-space:nowrap">753 <span style="font-size:10px;font-weight:400;color:#657469">kcal</span></span>
+              </div>
+              <button onClick="{{ confirm }}" style="{{ allStyle }}">{{ allLabel }}</button>
+            </div>
+            <div style="display:flex;flex-direction:column">
+              <div style="padding:7px 0;border-bottom:1px solid rgba(35,48,42,.05)">
+                <div style="display:flex;align-items:baseline;gap:6px">
+                  <span style="font-size:12.5px;white-space:nowrap">米饭</span>
+                  <span style="font-size:10px;color:#657469;white-space:nowrap">熟 200g</span>
+                  <span style="font-size:9px;color:#7C8A82;background:#EFF3ED;border-radius:99px;padding:2px 7px;white-space:nowrap;flex:none">中国成分表</span>
+                  <span style="flex:1"></span>
+                  <span style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500">232</span>
+                  <span style="font-size:9.5px;color:#657469">kcal</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:5px">
+                  <span style="flex:1;min-width:0;font-family:'DM Sans',sans-serif;font-size:9.5px;color:#657469;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">每100g 116 kcal · 碳 25.9 / 蛋 2.6 / 脂 0.3 / 纤 0.3</span>
+                  <button style="border:1px solid rgba(20,30,25,.20);background:transparent;color:#7C8A82;border-radius:8px;padding:3px 9px;font-size:10px;cursor:pointer;font-family:inherit;white-space:nowrap;flex:none" style-hover="background:#E6ECE3">修改</button>
+                  <button onClick="{{ ok0On }}" style="{{ ok0Style }}">{{ ok0Label }}</button>
+                </div>
+              </div>
+              <div style="padding:7px 0;border-bottom:1px solid rgba(35,48,42,.05)">
+                <div style="display:flex;align-items:baseline;gap:6px">
+                  <span style="font-size:12.5px;white-space:nowrap">红烧肉</span>
+                  <span style="font-size:10px;color:#657469;white-space:nowrap">熟 150g</span>
+                  <span style="font-size:9px;color:#B98A5E;background:#F7EDE1;border-radius:99px;padding:2px 7px;white-space:nowrap;flex:none">网络估算 · 可能不准</span>
+                  <span style="flex:1"></span>
+                  <span style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500">375</span>
+                  <span style="font-size:9.5px;color:#657469">kcal</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:5px">
+                  <span style="flex:1;min-width:0;font-family:'DM Sans',sans-serif;font-size:9.5px;color:#657469;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">每100g 250 kcal · 碳 2.7 / 蛋 12 / 脂 21 / 纤 —</span>
+                  <button style="border:1px solid rgba(20,30,25,.20);background:transparent;color:#7C8A82;border-radius:8px;padding:3px 9px;font-size:10px;cursor:pointer;font-family:inherit;white-space:nowrap;flex:none" style-hover="background:#E6ECE3">修改</button>
+                  <button onClick="{{ ok1On }}" style="{{ ok1Style }}">{{ ok1Label }}</button>
+                </div>
+              </div>
+              <div style="padding:7px 0;border-bottom:1px solid rgba(35,48,42,.05)">
+                <div style="display:flex;align-items:baseline;gap:6px">
+                  <span style="font-size:12.5px;white-space:nowrap">清炒西兰花</span>
+                  <span style="font-size:10px;color:#657469;white-space:nowrap">熟 180g</span>
+                  <span style="font-size:9px;color:#7C8A82;background:#EFF3ED;border-radius:99px;padding:2px 7px;white-space:nowrap;flex:none">中国成分表</span>
+                  <span style="flex:1"></span>
+                  <span style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500">146</span>
+                  <span style="font-size:9.5px;color:#657469">kcal</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:5px">
+                  <span style="flex:1;min-width:0;font-family:'DM Sans',sans-serif;font-size:9.5px;color:#657469;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">每100g 81 kcal · 碳 5.0 / 蛋 3.3 / 脂 5.6 / 纤 2.5</span>
+                  <button style="border:1px solid rgba(20,30,25,.20);background:transparent;color:#7C8A82;border-radius:8px;padding:3px 9px;font-size:10px;cursor:pointer;font-family:inherit;white-space:nowrap;flex:none" style-hover="background:#E6ECE3">修改</button>
+                  <button onClick="{{ ok2On }}" style="{{ ok2Style }}">{{ ok2Label }}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <sc-if value="{{ confirmed }}" hint-placeholder-val="{{ false }}">
+            <div style="align-self:center;font-size:11px;color:#657469;background:#E2E9DF;border-radius:99px;padding:5px 12px">已写入午餐 · 可撤销</div>
+          </sc-if>
+        </div>
+
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isBoard }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;gap:10px;margin-bottom:10px">
+          <div style="display:flex;flex-direction:column;flex:1;min-width:0;aspect-ratio:1;background:#FFFFFF;border-radius:20px;padding:12px;box-shadow:0 1px 2px rgba(35,48,42,.05)">
+            <div style="font-size:12.5px;font-weight:700">今日热量</div>
+            <div style="display:flex;align-items:baseline;gap:4px;margin-top:3px">
+              <span style="font-family:'DM Sans',sans-serif;font-size:27px;font-weight:700;letter-spacing:-1px;color:#2E8B62">−504</span>
+              <span style="font-size:10px;color:#657469">Δ kcal</span>
+            </div>
+            <div style="flex:1;max-height:14px"></div>
+            <div style="display:flex;justify-content:space-between;font-size:10.5px;padding:1.5px 0"><span style="color:#657469">摄入</span><span style="font-family:'DM Sans',sans-serif">1210</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:10.5px;padding:1.5px 0"><span style="color:#657469">静息 <span style="font-size:9px">BMR×1.2</span></span><span style="font-family:'DM Sans',sans-serif">1564</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:10.5px;padding:1.5px 0"><span style="color:#657469">活动消耗</span><span style="font-family:'DM Sans',sans-serif">150</span></div>
+            <div style="display:flex;gap:3px;margin-top:7px;height:5px;border-radius:99px;overflow:hidden">
+              <div style="width:52%;background:{{ cCarb }}"></div><div style="width:22%;background:{{ cProtein }}"></div><div style="width:26%;background:{{ cFat }}"></div>
+            </div>
+            <div style="font-size:9px;color:#657469;margin-top:4px">碳 : 蛋 : 脂 = 52 : 22 : 26</div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;flex:1;min-width:0;aspect-ratio:1;background:#FFFFFF;border-radius:20px;padding:12px;box-shadow:0 1px 2px rgba(35,48,42,.05)">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;align-items:baseline;gap:5px;min-width:0">
+                <span style="font-size:12.5px;font-weight:700">减脂计划</span>
+                <span style="font-size:9px;color:#657469;white-space:nowrap">7/20 – 9/20</span>
+              </div>
+              <button style="border:none;background:transparent;color:#2E8B62;font-size:10.5px;cursor:pointer;font-family:inherit;padding:0;flex:none" style-hover="color:#22704E">设置 ›</button>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;margin:0">
+              <svg width="108" height="72" viewBox="0 0 120 80">
+                <path d="M 16 72 A 44 44 0 0 1 104 72" fill="none" stroke="#E2E9DF" stroke-width="9" stroke-linecap="round"></path>
+                <path d="M 16 72 A 44 44 0 0 1 84.72 35.60" fill="none" stroke="#89BFA4" stroke-width="9" stroke-linecap="round"></path>
+                <line x1="74.61" y1="50.49" x2="89.21" y2="28.98" stroke="#22704E" stroke-width="3" stroke-linecap="round"></line>
+                <text x="60" y="68" text-anchor="middle" font-family="DM Sans" font-size="23" font-weight="700" fill="#141E19">69%</text>
+              </svg>
+              <div style="font-size:10px;color:#657469;margin-top:-2px">完成度</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:10.5px;padding:1.5px 0"><span style="color:#657469">当前 / 目标</span><span style="font-family:'DM Sans',sans-serif">58.4 / 57.0</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:10.5px;padding:1.5px 0"><span style="color:#657469">每周预计</span><span style="font-family:'DM Sans',sans-serif">−0.51 kg</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:10.5px;padding:1.5px 0"><span style="color:#657469">预期缺口</span><span style="font-family:'DM Sans',sans-serif">−559 kcal/天</span></div>
+          </div>
+        </div>
+        <div style="background:#FFFFFF;border-radius:20px;padding:12px 14px 10px;box-shadow:0 1px 2px rgba(35,48,42,.05)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <span style="font-size:13px;font-weight:700;white-space:nowrap">每日摄入热量</span>
+            <div style="display:flex;gap:3px;background:#E2E9DF;border-radius:10px;padding:3px">
+              <sc-for list="{{ wins }}" as="w" hint-placeholder-count="3">
+                <button onClick="{{ w.on }}" style="{{ w.style }}">{{ w.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="font-size:10px;color:#657469;margin-top:5px">红=摄入 · 灰段为运动消耗扣减</div>
+          <div style="display:flex;align-items:flex-end;gap:{{ barGap }};height:88px;margin-top:9px">
+            <sc-for list="{{ bars }}" as="b" hint-placeholder-count="7">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">
+                <div style="{{ b.wrap }}">
+                  <div style="{{ b.grey }}"></div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:{{ barGap }};margin-top:7px">
+            <sc-for list="{{ bars }}" as="b" hint-placeholder-count="7">
+              <div style="flex:1;text-align:center;font-family:'DM Sans',sans-serif;font-size:9px;color:#859389">{{ b.label }}</div>
+            </sc-for>
+          </div>
+
+          <div style="height:1px;background:rgba(35,48,42,.07);margin:11px 0 10px"></div>
+
+          <div style="display:flex;align-items:baseline;justify-content:space-between">
+            <span style="font-size:13px;font-weight:700">四大营养素</span>
+            <div style="display:flex;gap:9px;font-size:10px;color:#657469">
+              <span><i style="display:inline-block;width:7px;height:7px;border-radius:2px;background:{{ cCarb }};margin-right:3px"></i>碳水</span>
+              <span><i style="display:inline-block;width:7px;height:7px;border-radius:2px;background:{{ cProtein }};margin-right:3px"></i>蛋白</span>
+              <span><i style="display:inline-block;width:7px;height:7px;border-radius:2px;background:{{ cFat }};margin-right:3px"></i>脂肪</span>
+              <span><i style="display:inline-block;width:7px;height:7px;border-radius:2px;background:{{ cFiber }};margin-right:3px"></i>纤维</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:{{ barGap }};height:88px;margin-top:10px">
+            <sc-for list="{{ nbars }}" as="n" hint-placeholder-count="7">
+              <div style="{{ n.col }}">
+                <sc-for list="{{ n.segs }}" as="s" hint-placeholder-count="4">
+                  <div style="{{ s.style }}"></div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+
+        <div style="background:#FFFFFF;border-radius:20px;padding:12px 14px;box-shadow:0 1px 2px rgba(35,48,42,.05);margin-top:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <span style="font-size:13px;font-weight:700;white-space:nowrap">身体维度</span>
+            <div style="display:flex;gap:3px;background:#E2E9DF;border-radius:10px;padding:3px">
+              <sc-for list="{{ bwins }}" as="b" hint-placeholder-count="4">
+                <button onClick="{{ b.on }}" style="{{ b.style }}">{{ b.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="font-size:10px;color:#657469;margin:5px 0 6px">按记录等间距排列，非真实时间轴</div>
+          <svg width="100%" height="96" viewBox="0 0 320 120" preserveAspectRatio="none">
+            <sc-for list="{{ lines }}" as="l" hint-placeholder-count="2">
+              <polyline points="{{ l.points }}" fill="none" stroke="{{ l.stroke }}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></polyline>
+            </sc-for>
+          </svg>
+          <div style="display:flex;gap:5px;margin-top:9px">
+            <sc-for list="{{ dimChips }}" as="d" hint-placeholder-count="6">
+              <button onClick="{{ d.on }}" style="{{ d.style }}">{{ d.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background:#FFFFFF;border-radius:20px;padding:12px 14px;box-shadow:0 1px 2px rgba(35,48,42,.05);margin-top:10px">
+          <div style="font-size:13px;font-weight:700;margin-bottom:9px">运动记录</div>
+          <div style="display:flex;gap:12px;align-items:stretch">
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
+              <div style="font-size:10px;color:#657469">今日已记录</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px">
+                <span style="min-width:0">快走 <span style="color:#657469">30 min</span></span>
+                <span style="font-family:'DM Sans',sans-serif;color:#657469;flex:none">150 kcal</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px">
+                <span style="min-width:0">力量 <span style="color:#657469">20 min</span></span>
+                <span style="font-family:'DM Sans',sans-serif;color:#657469;flex:none">96 kcal</span>
+              </div>
+              <div style="flex:1"></div>
+              <div style="display:flex;align-items:baseline;justify-content:space-between;padding-top:7px;border-top:1px solid rgba(20,30,25,.10);font-size:11px;color:#657469">
+                <span>合计</span><span style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:#141E19">246 kcal</span>
+              </div>
+            </div>
+            <div style="width:1px;background:rgba(20,30,25,.10);flex:none"></div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;gap:5px;margin-bottom:7px">
+                <sc-for list="{{ cats }}" as="c" hint-placeholder-count="4">
+                  <button onClick="{{ c.on }}" style="{{ c.style }}">{{ c.label }}</button>
+                </sc-for>
+              </div>
+              <div style="display:flex;gap:6px">
+                <div style="flex:1;background:#EDF2E9;border-radius:11px;padding:6px 9px">
+                  <div style="font-size:9.5px;color:#657469">时长 min</div>
+                  <div style="font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500">30</div>
+                </div>
+                <div style="flex:1;background:#EDF2E9;border-radius:11px;padding:6px 9px">
+                  <div style="font-size:9.5px;color:#657469">消耗 kcal</div>
+                  <div style="font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500">150</div>
+                </div>
+              </div>
+              <button style="width:100%;border:none;background:#2E8B62;color:#fff;border-radius:11px;padding:8px 0;font-size:12.5px;cursor:pointer;font-family:inherit;margin-top:6px" style-hover="background:#22704E">添加</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isMine }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="background:#076653;border-radius:20px;padding:13px 14px;box-shadow:0 6px 18px rgba(7,102,83,.22);color:#FFFFFF">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px">
+            <div>
+              <div style="font-size:11px;color:#CFE7DD">基础代谢 BMR · {{ formulaName }}</div>
+              <div style="display:flex;align-items:baseline;gap:5px;margin-top:2px">
+                <span style="font-family:'DM Sans',sans-serif;font-size:32px;font-weight:700;letter-spacing:-1.2px;color:#FFFFFF">{{ bmrValue }}</span>
+                <span style="font-size:11.5px;color:#CFE7DD">kcal / 天</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:7px;padding-bottom:4px">
+              <span style="font-size:10.5px;color:#CFE7DD;white-space:nowrap">体脂率优先</span>
+              <button onClick="{{ toggleBf }}" style="{{ switchStyle }}"><span style="{{ knobStyle }}"></span></button>
+            </div>
+          </div>
+          <div style="font-size:10.5px;color:#CFE7DD;line-height:1.5;margin-top:5px">{{ formulaNote }}</div>
+          <div style="display:flex;gap:7px;margin-top:11px;padding-top:11px;border-top:1px solid rgba(255,255,255,.12)">
+            <div style="flex:1;background:rgba(255,255,255,.08);border-radius:11px;padding:6px 10px"><div style="font-size:9.5px;color:#CFE7DD">性别</div><div style="font-size:13.5px;font-weight:500">女</div></div>
+            <div style="flex:1;background:rgba(255,255,255,.08);border-radius:11px;padding:6px 10px"><div style="font-size:9.5px;color:#CFE7DD">身高 cm</div><div style="font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500">165</div></div>
+            <div style="flex:1;background:rgba(255,255,255,.08);border-radius:11px;padding:6px 10px"><div style="font-size:9.5px;color:#CFE7DD">年龄</div><div style="font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500">26</div></div>
+          </div>
+        </div>
+
+        <div style="background:#FFFFFF;border-radius:20px;padding:13px 14px;box-shadow:0 1px 2px rgba(35,48,42,.05);margin-top:10px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:9px">
+            <span style="font-size:13px;font-weight:700">身体维度</span>
+            <span style="font-size:10.5px;color:#2E8B62">2026-08-15 ▾</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px">
+            <div style="background:#EDF2E9;border-radius:11px;padding:6px 10px"><div style="font-size:9.5px;color:#657469">体重 kg</div><div style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500">58.4</div></div>
+            <div style="background:#EDF2E9;border-radius:11px;padding:6px 10px"><div style="font-size:9.5px;color:#657469">体脂率 %</div><div style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500">26.0</div></div>
+            <div style="background:#EDF2E9;border-radius:11px;padding:6px 10px"><div style="font-size:9.5px;color:#657469">腰围 cm</div><div style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500">73.5</div></div>
+            <div style="background:#EDF2E9;border-radius:11px;padding:6px 10px"><div style="font-size:9.5px;color:#657469">臀围 cm</div><div style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500">92.0</div></div>
+            <div style="background:#EDF2E9;border-radius:11px;padding:6px 10px"><div style="font-size:9.5px;color:#657469">大腿围 cm</div><div style="font-family:'DM Sans',sans-serif;font-size:14px;color:#A2AFA6">—</div></div>
+            <div style="background:#EDF2E9;border-radius:11px;padding:6px 10px"><div style="font-size:9.5px;color:#657469">小腿围 cm</div><div style="font-family:'DM Sans',sans-serif;font-size:14px;color:#A2AFA6">—</div></div>
+          </div>
+          <div style="font-size:10px;color:#657469;margin-top:8px">可只填若干项；按所选日期 upsert，不覆盖更晚记录。</div>
+        </div>
+
+        <div style="background:#FFFFFF;border-radius:20px;padding:13px 14px;box-shadow:0 1px 2px rgba(35,48,42,.05);margin-top:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div style="min-width:0">
+              <div style="font-size:13px;font-weight:700">握拳参照尺寸</div>
+              <div style="font-size:10px;color:#657469;margin-top:2px">拍照时入镜，作为估算克重的比例参照</div>
+            </div>
+            <div style="display:flex;gap:6px;flex:none">
+              <div style="background:#EDF2E9;border-radius:10px;padding:5px 9px;text-align:center"><div style="font-size:9px;color:#657469">长</div><div style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500">9.5</div></div>
+              <div style="background:#EDF2E9;border-radius:10px;padding:5px 9px;text-align:center"><div style="font-size:9px;color:#657469">宽</div><div style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500">7.2</div></div>
+              <div style="background:#EDF2E9;border-radius:10px;padding:5px 9px;text-align:center"><div style="font-size:9px;color:#657469">高</div><div style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500">6.0</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#FFFFFF;border-radius:20px;padding:2px 14px;box-shadow:0 1px 2px rgba(35,48,42,.05);margin-top:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(20,30,25,.10);font-size:12.5px"><span>备份与恢复</span><span style="color:#A2AFA6">›</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(20,30,25,.10);font-size:12.5px"><span>出网与隐私说明</span><span style="color:#A2AFA6">›</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;font-size:12.5px"><span>私有后端连接</span><span style="font-size:10.5px;color:#2E8B62">已连接</span></div>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+
+  <sc-if value="{{ isRecord }}" hint-placeholder-val="{{ true }}">
+    <div style="position:absolute;left:0;right:0;bottom:78px;padding:0 16px 10px;background:linear-gradient(180deg,rgba(246,248,244,0) 0%,#EDF2E9 34%)">
+      <div style="display:flex;align-items:center;gap:9px;background:#FFFFFF;border-radius:99px;padding:8px 8px 8px 16px;box-shadow:0 4px 18px rgba(35,48,42,.09)">
+        <span style="flex:1;font-size:13px;color:#859389">描述你吃了什么…</span>
+        <span style="width:34px;height:34px;border-radius:50%;background:#E6ECE3;display:flex;align-items:center;justify-content:center"><span style="width:13px;height:11px;border:1.6px solid #7C8A82;border-radius:3px;display:block"></span></span>
+        <span style="width:34px;height:34px;border-radius:50%;background:#2E8B62;display:flex;align-items:center;justify-content:center"><span style="width:9px;height:9px;border-top:1.8px solid #fff;border-right:1.8px solid #fff;transform:rotate(-45deg);display:block;margin-left:-3px"></span></span>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="position:absolute;left:0;right:0;bottom:0;height:78px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-top:1px solid rgba(35,48,42,.07);display:flex;align-items:flex-start;padding:10px 12px 0">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+      <button onClick="{{ t.on }}" style="{{ t.style }}">
+        <span style="{{ t.dot }}"></span>
+        <span style="font-size:10.5px;letter-spacing:.5px">{{ t.label }}</span>
+      </button>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844},&quot;tab&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;record&quot;,&quot;board&quot;,&quot;mine&quot;],&quot;default&quot;:&quot;record&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  constructor(p){
+    super(p);
+    this.state = {tab: p.tab || 'record', win: 7, dims: {weight:true, fat:true, waist:false, hip:false, thigh:false, calf:false}, cat:'cardio', ok:[false,false,false], bf:true, pane:'detail', bwin:'3m'};
+  }
+  tog(i){ this.setState(s=>{const ok=s.ok.slice(); ok[i]=!ok[i]; return {ok};}); }
+  okLabel(i){ return this.state.ok[i] ? '已确认' : '确认'; }
+  okStyle(i){
+    const on=this.state.ok[i];
+    return 'border:none;cursor:pointer;font-family:inherit;font-size:10px;border-radius:8px;padding:4px 10px;white-space:nowrap;flex:none;'+(on?'background:#E2E9DF;color:#657469':'background:#2E8B62;color:#fff');
+  }
+  cols(){const p=this.props;return {intake:p.intakeColor||'#E4705E',carb:p.carbColor||'#4FA3A8',protein:p.proteinColor||'#8FBF6A',fat:p.fatColor||'#E8A85C',fiber:p.fiberColor||'#9B87C4'};}
+  series(n){
+    const out=[]; const base=new Date(2026,7,15);
+    for(let i=n-1;i>=0;i--){
+      const d=new Date(base); d.setDate(base.getDate()-i);
+      const s=Math.sin(i*1.9)*0.5+0.5, s2=Math.sin(i*2.7+1)*0.5+0.5;
+      let kcal=Math.round(1330+s*640);
+      let act=(i%3===0)?Math.round(110+s2*290):((i%5===0)?0:Math.round(s2*150));
+      let carb=Math.round(kcal*0.45/4), protein=Math.round(kcal*0.24/4), fat=Math.round(kcal*0.31/9), fiber=Math.round(8+s2*14);
+      if(i===0){kcal=1210;act=150;carb=118;protein=50;fat=60;fiber=12;}
+      out.push({label:(d.getMonth()+1)+'/'+d.getDate(), kcal, act, carb, protein, fat, fiber});
+    }
+    return out;
+  }
+  bodyData(){
+    return [
+      {w:61.5,f:28.4,waist:78.0},{w:61.1,f:28.1,waist:77.6},{w:60.6,f:27.9,waist:77.0},
+      {w:60.8,f:27.6,waist:76.8},{w:60.1,f:27.4,waist:76.0},{w:59.7,f:27.1,waist:75.4},
+      {w:59.9,f:27.0,waist:75.2},{w:59.2,f:26.7,waist:74.6},{w:58.9,f:26.5,waist:74.2},
+      {w:58.8,f:26.3,waist:74.0},{w:58.5,f:26.1,waist:73.7},{w:58.4,f:26.0,waist:73.5}
+    ];
+  }
+  poly(vals,w,h,pad){
+    const mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals), r=(mx-mn)||1;
+    return vals.map((v,i)=>{
+      const x=(i*(w/(vals.length-1))).toFixed(1);
+      const y=(h-pad-((v-mn)/r)*(h-pad*2)).toFixed(1);
+      return x+','+y;
+    }).join(' ');
+  }
+  mealData(){
+    return [
+      {k:'b',label:'早餐',kcal:457,c:53,p:21,f:17,fb:7,items:[
+        {name:'我的燕麦碗',qty:'1 份',kcal:385,c:52,p:14,f:12,fb:7},
+        {name:'水煮蛋',qty:'熟 50g',kcal:72,c:0.6,p:6.6,f:5.4,fb:0}]},
+      {k:'l',label:'午餐',kcal:753,c:65,p:29,f:43,fb:5,items:[
+        {name:'米饭',qty:'熟 200g',kcal:232,c:52,p:5.2,f:0.6,fb:0.6},
+        {name:'红烧肉',qty:'熟 150g',kcal:375,c:4,p:18,f:32,fb:'—',est:true},
+        {name:'清炒西兰花',qty:'熟 180g',kcal:146,c:9,p:6,f:10,fb:4.5}]},
+      {k:'d',label:'晚餐',kcal:0,items:[]},
+      {k:'s',label:'加餐',kcal:0,items:[]}
+    ];
+  }
+  renderVals(){
+    const st=this.state;
+    const open=st.open||{};
+    const meals=this.mealData().map(m=>{
+      const on=!!open[m.k], has=m.items.length>0;
+      return {
+        label:m.label, items:m.items, open:on&&has,
+        count: has ? m.items.length+' 条' : '未记录',
+        kcal: has ? m.kcal : '—',
+        c: has?m.c:'—', p: has?m.p:'—', f: has?m.f:'—', fb: has?m.fb:'—',
+        headStyle:'width:100%;display:grid;grid-template-columns:1fr 44px 30px 22px 22px 22px 22px;gap:5px;align-items:center;background:'+(on&&has?'#E8EFE6':'#F3F6F1')+';border:none;border-radius:8px;padding:4px 8px;cursor:'+(has?'pointer':'default')+';font-family:inherit;text-align:left',
+        caret:'width:0;height:0;border-left:4.5px solid '+(has?'#7C8A82':'#C6CFC8')+';border-top:3.5px solid transparent;border-bottom:3.5px solid transparent;display:block;flex:none;transform:rotate('+(on&&has?'90deg':'0deg')+');transition:transform .15s',
+        on: has ? ()=>this.setState(s=>({open:Object.assign({},s.open,{[m.k]:!(s.open||{})[m.k]})})) : ()=>{}
+      };
+    });
+    const isRec = st.tab==='record';
+    const titleStyle = 'display:none';
+    const dateStyle = isRec ? 'display:none' : "font-family:'DM Sans',sans-serif;font-size:12px;color:#657469;padding-bottom:5px";
+    const C=this.cols();
+    const titles={record:{k:'RECORD',t:'记录'},board:{k:'DASHBOARD',t:'看板'},mine:{k:'PROFILE',t:'我的'}};
+    const days=this.series(st.win);
+    const maxK=Math.max.apply(null,days.map(d=>d.kcal));
+    const H=88;
+    const bars=days.map((d,i)=>{
+      const h=Math.round(d.kcal/maxK*H);
+      const g=Math.round(Math.min(d.act,d.kcal)/d.kcal*h);
+      const showLabel = st.win<=7 || i%(st.win===14?2:5)===0;
+      return {
+        label: showLabel? d.label : '',
+        wrap:'width:100%;height:'+h+'px;background:'+C.intake+';border-radius:5px 5px 3px 3px;display:flex;flex-direction:column;justify-content:flex-start;overflow:hidden',
+        grey:'width:100%;height:'+g+'px;background:#C2BDB6'
+      };
+    });
+    const maxN=Math.max.apply(null,days.map(d=>d.carb+d.protein+d.fat+d.fiber));
+    const NH=88;
+    const cols=[['carb',C.carb],['protein',C.protein],['fat',C.fat],['fiber',C.fiber]];
+    const nbars=days.map(d=>({
+      col:'flex:1;height:'+Math.round((d.carb+d.protein+d.fat+d.fiber)/maxN*NH)+'px;display:flex;flex-direction:column-reverse;border-radius:4px;overflow:hidden',
+      segs: cols.map(c=>({style:'flex:'+d[c[0]]+';background:'+c[1]}))
+    }));
+    const counts={'1m':5,'3m':12,'6m':20,'1y':30};
+    const all=this.bodyData();
+    const n=counts[st.bwin]||12;
+    const bd = n<=all.length ? all.slice(all.length-n) : (()=>{
+      const out=[]; const first=all[0], last=all[all.length-1];
+      for(let i=0;i<n;i++){
+        const t=i/(n-1);
+        const src=all[Math.min(all.length-1, Math.round(t*(all.length-1)))];
+        const wob=Math.sin(i*2.1)*0.35;
+        out.push(i<n-all.length ? {w:+(first.w+(n-all.length-i)*0.42+wob).toFixed(1), f:+(first.f+(n-all.length-i)*0.18).toFixed(1), waist:+(first.waist+(n-all.length-i)*0.5).toFixed(1)} : all[i-(n-all.length)]);
+      }
+      return out;
+    })();
+    const bwins=[['1m','1 月'],['3m','3 月'],['6m','半年'],['1y','1 年']].map(b=>({label:b[1], on:()=>this.setState({bwin:b[0]}),
+      style:'border:none;cursor:pointer;font-family:inherit;font-size:11px;padding:5px 9px;border-radius:8px;background:'+(st.bwin===b[0]?'#FFFFFF':'transparent')+';color:'+(st.bwin===b[0]?'#141E19':'#657469')+';font-weight:'+(st.bwin===b[0]?'500':'400')+';box-shadow:'+(st.bwin===b[0]?'0 1px 3px rgba(35,48,42,.10)':'none')}));
+    const dimDefs=[['weight','体重','#2E8B62','w'],['fat','体脂率','#2E80C4','f'],['waist','腰围','#D97F2B','waist'],['hip','臀围','#7E5FD0','hip'],['thigh','大腿围','#4E7A63','thigh'],['calf','小腿围','#B0A98F','calf']];
+    const lines=dimDefs.filter(d=>st.dims[d[0]] && bd[0][d[3]]!==undefined)
+      .map(d=>({stroke:d[2], points:this.poly(bd.map(r=>r[d[3]]),320,120,12)}));
+    const chip=(on,color)=>'border:1px solid '+(on?color:'rgba(20,30,25,.20)')+';background:'+(on?color+'1F':'transparent')+';color:'+(on?'#141E19':'#657469')+';border-radius:99px;padding:5px 0;font-size:10.5px;cursor:pointer;font-family:inherit;flex:1;white-space:nowrap';
+    const dimChips=dimDefs.map(d=>({label:d[1], style:chip(!!st.dims[d[0]],d[2]), on:()=>this.setState(s=>({dims:Object.assign({},s.dims,{[d[0]]:!s.dims[d[0]]})}))}));
+    const catDefs=[['cardio','有氧'],['strength','力量'],['core','核心'],['other','其他']];
+    const cats=catDefs.map(c=>({label:c[1], style:'flex:1;border:1px solid '+(st.cat===c[0]?'#2E8B62':'rgba(20,30,25,.20)')+';background:'+(st.cat===c[0]?'#D4EADC':'transparent')+';color:'+(st.cat===c[0]?'#22704E':'#657469')+';border-radius:9px;padding:5px 0;font-size:11px;cursor:pointer;font-family:inherit', on:()=>this.setState({cat:c[0]})}));
+    const wins=[7,14,30].map(w=>({label:w+' 天', on:()=>this.setState({win:w}),
+      style:'border:none;cursor:pointer;font-family:inherit;font-size:11px;padding:5px 9px;border-radius:8px;background:'+(st.win===w?'#FFFFFF':'transparent')+';color:'+(st.win===w?'#141E19':'#657469')+';font-weight:'+(st.win===w?'500':'400')+';box-shadow:'+(st.win===w?'0 1px 3px rgba(35,48,42,.10)':'none')}));
+    const tabDefs=[['record','记录'],['board','看板'],['mine','我的']];
+    const tabs=tabDefs.map((t,i)=>{
+      const on=st.tab===t[0];
+      const shape = i===0 ? 'border-radius:6px' : (i===1 ? 'border-radius:2px' : 'border-radius:50%');
+      return {label:t[1], on:()=>this.setState({tab:t[0]}),
+        style:'flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;border:none;background:transparent;cursor:pointer;font-family:inherit;padding:8px 0;color:'+(on?'#22704E':'#859389'),
+        dot:'width:17px;height:17px;'+shape+';background:'+(on?'#2E8B62':'transparent')+';border:2px solid '+(on?'#2E8B62':'#A2AFA6')+';display:block'};
+    });
+    const ideal=[];
+    for(let i=0;i<=20;i++){const t=i/20;const y=57+(61.5-57)*Math.exp(-3*t);ideal.push((i*16)+','+(70-((y-56.5)/5.5)*60).toFixed(1));}
+    const realVals=[61.5,61.0,60.4,60.1,59.6,59.2,58.9,58.4];
+    const real=realVals.map((v,i)=>(i*(160/(realVals.length-1)))+','+(70-((v-56.5)/5.5)*60).toFixed(1));
+    return {
+      titleStyle, dateStyle, meals,
+      tabKicker:titles[st.tab].k, tabTitle:titles[st.tab].t,
+      isRecord:st.tab==='record', isBoard:st.tab==='board', isMine:st.tab==='mine',
+      tabs, wins, bars, nbars, cats, dimChips, lines, bwins,
+      isDetail: st.pane==='detail', isFav: st.pane==='fav',
+      panes: [['detail','今日明细'],['fav','常吃食物']].map(p=>({label:p[1], on:()=>this.setState({pane:p[0]}),
+        style:'flex:1;border:none;cursor:pointer;font-family:inherit;font-size:11px;padding:5px 0;border-radius:8px;background:'+(st.pane===p[0]?'#FFFFFF':'transparent')+';color:'+(st.pane===p[0]?'#141E19':'#657469')+';font-weight:'+(st.pane===p[0]?'500':'400')+';box-shadow:'+(st.pane===p[0]?'0 1px 3px rgba(35,48,42,.10)':'none')})),
+      barGap: st.win===7?'8px':(st.win===14?'5px':'2px'),
+      planIdeal:'M '+ideal.join(' L '), planReal:'M '+real.join(' L '),
+      confirmed: (st.ok||[]).length===3 && st.ok.every(Boolean),
+      ok0On:()=>this.tog(0), ok1On:()=>this.tog(1), ok2On:()=>this.tog(2),
+      ok0Label:this.okLabel(0), ok1Label:this.okLabel(1), ok2Label:this.okLabel(2),
+      cIntake:C.intake, cCarb:C.carb, cProtein:C.protein, cFat:C.fat, cFiber:C.fiber,
+      ok0Style:this.okStyle(0), ok1Style:this.okStyle(1), ok2Style:this.okStyle(2),
+      allLabel: (st.ok||[]).every(Boolean) ? '已全部写入' : '全部确认',
+      allStyle: 'flex:none;border:none;cursor:pointer;font-family:inherit;font-size:10.5px;font-weight:500;border-radius:9px;padding:5px 11px;white-space:nowrap;'+((st.ok||[]).every(Boolean)?'background:#E2E9DF;color:#657469':'background:#2E8B62;color:#fff'),
+      confirm:()=>this.setState(s=>({ok:s.ok.every(Boolean)?[false,false,false]:[true,true,true]})),
+      bmrValue: st.bf?1303:1324,
+      formulaName: st.bf?'Katch-McArdle':'Mifflin-St Jeor',
+      formulaNote: st.bf?'已读到体脂率 26.0%，按瘦体重 43.2 kg 计算。':'未使用体脂率，按性别 / 身高 / 年龄 / 体重计算。',
+      toggleBf:()=>this.setState(s=>({bf:!s.bf})),
+      switchStyle:'width:42px;height:24px;border-radius:99px;border:none;cursor:pointer;padding:3px;display:flex;justify-content:'+(st.bf?'flex-end':'flex-start')+';background:'+(st.bf?'#5FCB96':'#DFE4DE')+';transition:background .2s',
+      knobStyle:'width:18px;height:18px;border-radius:50%;background:#fff;display:block;box-shadow:0 1px 3px rgba(35,48,42,.2)'
+    };
+  }
+}
+</script>
+</body>
+</html>
