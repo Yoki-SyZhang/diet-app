@@ -14,6 +14,7 @@
 - 前端设计规范 → `docs/design/design.md`
 - 当前执行进度 → `tasks/STATUS.md`
 - 某个决策"为什么这么定" → `docs/decisions/`
+- 外部食物数据快照锁定的是哪个版本/commit → `docs/data/food_base-import-log.md`
 
 ## 铁律(最容易被搞错的,违反=返工)
 
