@@ -30,7 +30,10 @@
 
 - `backend/` — Python + FastAPI 服务端;数据层 SQLAlchemy + Alembic,迁移脚本在 `migrations/`,SQLite 文件在 `data/`(不进 git)；业务代码(`models/`/`schemas/`/路由/服务)骨架待填充,见 `.claude/rules/data-model.md`
 - `frontend/` — React + TS PWA(骨架待填充);手机竖屏为唯一正式布局
-- `tests/` — 后端/前端测试(骨架待填充, 预期分出验收/单元/集成)
+- `tests/` — 后端测试在 `tests/backend/`(预期分出验收/单元/集成)。**前端测试例外**:放
+  `frontend/src/tests/`,不放这里——实测 Node 从测试文件所在目录逐级向上找
+  `node_modules`,`tests/` 和 `frontend/` 是平行目录,放仓库根 `tests/frontend/` 下
+  找不到依赖(`Cannot find module react/jsx-dev-runtime`),不是配置疏漏。
 - `tasks/` — `STATUS.md` 全局进度板, 边做边勾, 粗粒度、慢变、跨所有步；`current.md `当前这一步的活计划, plan mode 产出, 做完被下一步覆盖, 细粒度, 每次提交进 git
 - `docs/product/` — `PRD.md` 产品需求、`SPEC.md` 技术契约(业务定义唯一真源)；(会变,git 管版本)
 - `docs/design/` — `design.md` 前端设计规范、`ui-bundle/` 设计稿静态文件
@@ -39,10 +42,14 @@
 
 ## 命令
 
-- 后端起服务:`...`
-- 跑测试:`...`   ← done 的判定
-- 前端 dev:`...`
-- lint:`...`
+- 后端起服务:`conda activate vibe-coding && cd backend && uvicorn app.main:app --reload`
+- 跑测试(done 的判定):
+  - 后端(仓库根目录):`conda activate vibe-coding && pytest`
+  - 前端:`cd frontend && npm test`
+- 前端 dev:`cd frontend && npm run dev`
+- lint:
+  - 后端:`conda activate vibe-coding && ruff check backend && mypy`
+  - 前端:`cd frontend && npm run lint`(oxlint)
 
 ## Definition of Done
 

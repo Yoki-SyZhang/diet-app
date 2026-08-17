@@ -19,8 +19,27 @@
 
 ## 快速开始
 
+后端:
+
 ```
 conda activate vibe-coding
 pip install -r backend/requirements-dev.txt
-cd backend && alembic upgrade head
+cd backend && alembic upgrade head   # 会改到真实 SQLite,先确认无误再跑
+uvicorn app.main:app --reload
+```
+
+前端:
+
+```
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+跑测试:
+
+```
+conda activate vibe-coding && pytest      # 后端,仓库根目录跑
+cd frontend && npm test                    # 前端
 ```
