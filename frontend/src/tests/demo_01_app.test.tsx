@@ -17,6 +17,8 @@ describe('App', () => {
   it('renders both tabs and switches the active one on click', async () => {
     render(<App />)
 
+    expect(await screen.findByText('已连接后端')).toBeInTheDocument()
+
     const recordTab = screen.getByRole('tab', { name: '记录' })
     const boardTab = screen.getByRole('tab', { name: '看板' })
 
