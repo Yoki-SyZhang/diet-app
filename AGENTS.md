@@ -12,7 +12,8 @@
 - 技术契约(数据模型/流程/LLM 契约)→ `docs/product/SPEC.md`  ← 业务问题以此为唯一定义
 - 版本范围 → PRD §9(权威);技术验收 → SPEC §11(从 §9 派生)
 - 前端设计规范 → `docs/design/design.md`
-- 当前执行进度 → `tasks/STATUS.md`
+- 当前执行进度(全局) → `tasks/STATUS.md`
+- 当前执行任务的plan(现阶段) → `tasks/current.md`
 - 某个决策"为什么这么定" → `docs/decisions/`
 - 外部食物数据快照锁定的是哪个版本/commit → `docs/data/food_base-import-log.md`
 
@@ -27,10 +28,10 @@
 
 ## 目录布局
 
-- `backend/` — Python + FastAPI 服务端;数据层 SQLAlchemy + Alembic,迁移脚本在 `migrations/`,SQLite 文件在 `data/`(不进 git);业务代码(`models/`/`schemas/`/路由/服务)骨架待填充,见 `.claude/rules/data-model.md`
+- `backend/` — Python + FastAPI 服务端;数据层 SQLAlchemy + Alembic,迁移脚本在 `migrations/`,SQLite 文件在 `data/`(不进 git)；业务代码(`models/`/`schemas/`/路由/服务)骨架待填充,见 `.claude/rules/data-model.md`
 - `frontend/` — React + TS PWA(骨架待填充);手机竖屏为唯一正式布局
 - `tests/` — 后端/前端测试(骨架待填充, 预期分出验收/单元/集成)
-- `tasks/` — `STATUS.md` 当前执行进度, 边做边勾, 覆盖更新, 不新建计划文件, 但每次提交进 git
+- `tasks/` — `STATUS.md` 全局进度板, 边做边勾, 粗粒度、慢变、跨所有步；`current.md `当前这一步的活计划, plan mode 产出, 做完被下一步覆盖, 细粒度, 每次提交进 git
 - `docs/product/` — `PRD.md` 产品需求、`SPEC.md` 技术契约(业务定义唯一真源)；(会变,git 管版本)
 - `docs/design/` — `design.md` 前端设计规范、`ui-bundle/` 设计稿静态文件
 - `docs/decisions/` — 关键决策记录("为什么这么定")
