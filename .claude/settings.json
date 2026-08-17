@@ -16,12 +16,9 @@
       "Bash(del *)",
       "Bash(Remove-Item *)",
       "Bash(sqlite3 *)",
-      "Read(./.env)",
-      "Read(./.env.*)",
-      "Edit(./.env)",
-      "Edit(./.env.*)",
-      "Write(./.env)",
-      "Write(./.env.*)"
+      "Read(./backend/.env)",
+      "Edit(./backend/.env)",
+      "Write(./backend/.env)"
     ]
   }
 }
