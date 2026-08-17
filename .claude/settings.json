@@ -5,6 +5,11 @@
     "ask": [
       "Bash(git push *)"
     ],
+    "allow": [
+      "Read(./backend/.env.example)",
+      "Write(./backend/.env.example)",
+      "Edit(./backend/.env.example)"
+    ],
     "deny": [
       "Bash(rm *)",
       "Bash(rmdir *)",

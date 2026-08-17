@@ -26,6 +26,9 @@ backend/data/
 .env.*
 !.env.example
 
+# --- 本地一次性素材(真实照片等,不进版本库) ---
+.local/
+
 # --- 编辑器/系统 ---
 .vscode/
 .idea/

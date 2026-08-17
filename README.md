@@ -17,4 +17,10 @@
 - `tests/`：单元、集成与验收测试。
 - `docs/`：产品、设计和架构决策真源。
 
-当前仅完成文档与仓库脚手架，运行和验证命令将在代码骨架确定后补充。
+## 快速开始
+
+```
+conda activate vibe-coding
+pip install -r backend/requirements-dev.txt
+cd backend && alembic upgrade head
+```

@@ -7,6 +7,8 @@
 
 - 任何 3 步以上或跨多文件的改动:**先进 plan mode**,产出计划我批注确认后再实现;
   一句话能说清的 diff 直接做,不必 plan。
+- 跑 `backend/**` 任何命令(装依赖、测试、`alembic` 等)前先 `conda activate vibe-coding`
+  (Python 3.11);环境未激活时不要用系统默认 Python 执行 backend 命令。
 - 改 `backend/**`(尤其结转/归属日/四级查询)时用 plan mode,先读 SPEC 对应章节再动。
 - 动 `frontend/**` 前先看 `docs/design/design.md` 的设计规范(见 .claude/rules/frontend.md)。
 - 分区细则见 `.claude/rules/`:backend.md / frontend.md / data-model.md 会按路径自动加载。

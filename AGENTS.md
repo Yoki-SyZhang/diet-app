@@ -26,7 +26,7 @@
 
 ## 目录布局
 
-- `backend/` — Python + FastAPI 服务端(骨架待填充);内部预期分出 `models/` `schemas/` `migrations/`,见 `.claude/rules/data-model.md`
+- `backend/` — Python + FastAPI 服务端;数据层 SQLAlchemy + Alembic,迁移脚本在 `migrations/`,SQLite 文件在 `data/`(不进 git);业务代码(`models/`/`schemas/`/路由/服务)骨架待填充,见 `.claude/rules/data-model.md`
 - `frontend/` — React + TS PWA(骨架待填充);手机竖屏为唯一正式布局
 - `tests/` — 后端/前端测试(骨架待填充, 预期分出验收/单元/集成)
 - `tasks/` — `STATUS.md` 当前执行进度, 边做边勾, 覆盖更新, 不新建计划文件, 但每次提交进 git
