@@ -3,7 +3,11 @@
     "defaultMode": "default",
     "disableBypassPermissionsMode": "disable",
     "ask": [
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(rm *)",
+      "Bash(rmdir *)",
+      "Bash(del *)",
+      "Bash(Remove-Item *)"
     ],
     "allow": [
       "Read(./backend/.env.example)",
@@ -11,10 +15,6 @@
       "Edit(./backend/.env.example)"
     ],
     "deny": [
-      "Bash(rm *)",
-      "Bash(rmdir *)",
-      "Bash(del *)",
-      "Bash(Remove-Item *)",
       "Bash(sqlite3 *)",
       "Read(./backend/.env)",
       "Edit(./backend/.env)",
