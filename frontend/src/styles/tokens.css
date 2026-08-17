@@ -1,0 +1,14 @@
+/* design.md §2/§3 色板与字体 token 基础层;数值是 bundle 提炼的种子值,
+   非最终产品配置,后续视觉方向调整时可能变。*/
+:root {
+  --color-primary: #2e8b62;
+  --color-primary-hover: #22704e;
+  --color-bg: #edf2e9;
+  --color-card: #ffffff;
+  --color-text-primary: #141e19;
+  --color-text-secondary: #657469;
+  --color-text-tertiary: #7c8a82;
+  --radius-card: 20px;
+  --font-numeric: 'DM Sans', sans-serif;
+  --font-text: 'Noto Sans SC', sans-serif;
+}
