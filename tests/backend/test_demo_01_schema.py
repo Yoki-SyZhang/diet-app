@@ -1,3 +1,8 @@
+"""1.2 Demo 数据模型迁移:5 张表结构是否符合 SPEC——表存在、无 user_id、营养素字段
+可空且无默认值、daily_summary 主键、food_base_cn 唯一约束、food_base_us 主键、
+meal_entry 枚举 CHECK 约束落到新字面量(other/decompose_estimate)。
+"""
+
 from sqlalchemy import inspect
 
 DEMO_TABLES = ("meal_entry", "daily_summary", "chat_message", "food_base_cn", "food_base_us")

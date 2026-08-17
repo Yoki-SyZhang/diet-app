@@ -1,3 +1,4 @@
+// 1.3 前端 PWA 空壳:记录/看板两个 Tab 都渲染,点击后 aria-selected 正确切换。
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'

@@ -33,7 +33,9 @@
 - `tests/` — 后端测试在 `tests/backend/`(预期分出验收/单元/集成)。**前端测试例外**:放
   `frontend/src/tests/`,不放这里——实测 Node 从测试文件所在目录逐级向上找
   `node_modules`,`tests/` 和 `frontend/` 是平行目录,放仓库根 `tests/frontend/` 下
-  找不到依赖(`Cannot find module react/jsx-dev-runtime`),不是配置疏漏。
+  找不到依赖(`Cannot find module react/jsx-dev-runtime`),不是配置疏漏。测试文件按
+  `test_demo_NN_关键词`(后端)/`demo_NN_关键词.test.tsx`(前端)命名,`NN` 是所属 PR
+  编号,具体规则见 `tasks/STATUS.md` 表格上方说明。
 - `tasks/` — `STATUS.md` 全局进度板, 边做边勾, 粗粒度、慢变、跨所有步；`current.md `当前这一步的活计划, plan mode 产出, 做完被下一步覆盖, 细粒度, 每次提交进 git
 - `docs/product/` — `PRD.md` 产品需求、`SPEC.md` 技术契约(业务定义唯一真源)；(会变,git 管版本)
 - `docs/design/` — `design.md` 前端设计规范、`ui-bundle/` 设计稿静态文件
