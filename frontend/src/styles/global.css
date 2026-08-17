@@ -1,0 +1,16 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-text);
+}
+
+#root {
+  max-width: 390px;
+  margin: 0 auto;
+  min-height: 100vh;
+}

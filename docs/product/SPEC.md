@@ -179,12 +179,12 @@ PWA 以手机竖屏为唯一正式布局目标，并支持添加到主屏幕。�
 | ------------------------------------------- | ----------------------------------------------------- |
 | id                                          | 行标识                                                |
 | date                                        | 归属日                                                |
-| meal_slot                                   | breakfast/lunch/dinner/snack                          |
+| meal_slot                                   | breakfast/lunch/dinner/other                                |
 | food_name                                   | 用户确认后的食物名称                                  |
 | quantity                                    | 本次计算使用的克数或份数                              |
 | unit                                        | g 或 serving                                          |
 | kcal / carb_g / protein_g / fat_g / fiber_g | 本次摄入营养快照                                      |
-| source_tag                                  | 单一来源字段：chn_table/usda/web_estimate/user_create |
+| source_tag                                  | 单一来源字段：chn_table/usda/decompose_estimate/user_create |
 | created_at                                  | UTC-0 ISO8601 真实录入时刻                            |
 
 `created_at` 以 UTC 存储，作为唯一真时间，即使用户所在时区变动也能溯源。归属日 `date` 仍按写入时的本地设备时间 −2h 计算并单独存字段；二者分工：`date` 管业务归属，`created_at` 管绝对时序与审计。
@@ -269,7 +269,7 @@ USDA 表缓存 [FoodData Central Food Details API](https://fdc.nal.usda.gov/api-
 | protein_100g      | 每 100g 可食部蛋白质                                                 |
 | fat_100g          | 每 100g 可食部脂肪                                                   |
 | fiber_100g        | 每 100g 可食部膳食纤维                                               |
-| source_tag        | 原始营养来源；web_estimate 保存后仍保持该值，recipe 使用 user_create |
+| source_tag        | 原始营养来源；decompose_estimate 保存后仍保持该值，recipe 使用 user_create |
 | components        | 仅食谱使用；每项只包含食物名、克重和 raw/cooked                      |
 | updated_at        | UTC-0                                                                |
 
@@ -474,7 +474,7 @@ BMR 使用 `user_profile` 的基础信息，并从 `body_metric` 分别读取按
 
 ### 7.8 来源与缺失值
 
-每条营养数据只用一个 `source_tag` 表达来源，不再设置含义重叠的来源引用字段。常吃库复用不覆盖原来源；`web_estimate` 永久保留风险标记。第④级候选的置信度只用于确认界面，不另造来源字段。不同来源缺少某项营养素时使用 null 而不是 0；聚合和 UI 必须区分“未提供”和“确定为零”。
+每条营养数据只用一个 `source_tag` 表达来源，不再设置含义重叠的来源引用字段。常吃库复用不覆盖原来源；`decompose_estimate` 永久保留风险标记。第④级候选的置信度只用于确认界面，不另造来源字段。不同来源缺少某项营养素时使用 null 而不是 0；聚合和 UI 必须区分“未提供”和“确定为零”。
 
 ### 7.9 第④级拆解机制
 
@@ -603,7 +603,7 @@ LLM 只输出操作草稿；用户 Confirm 后按 §6.2/§7.5 执行。
   "confidence": "low" }
 ```
 
-这种单项估算系统标注为 `source_tag = web_estimate`，不再另存来源引用字段。缺失营养素保持 null，不用 0 补齐。整道菜最终写入的营养是后端对所有已解析组成项的加总，不是 LLM 直接给出的单一数字；按 §7.4 必须确认后才能写入餐次。
+这种单项估算系统标注为 `source_tag = decompose_estimate`，不再另存来源引用字段。缺失营养素保持 null，不用 0 补齐。整道菜最终写入的营养是后端对所有已解析组成项的加总，不是 LLM 直接给出的单一数字；按 §7.4 必须确认后才能写入餐次。
 
 ### 8.6 运动对话解析契约（Closed Beta 起）
 
