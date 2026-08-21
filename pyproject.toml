@@ -14,6 +14,6 @@ select = ["E", "F", "I"]
 [tool.mypy]
 python_version = "3.11"
 mypy_path = "backend"
-files = ["backend/app"]
+files = ["backend/app", "backend/scripts"]
 ignore_missing_imports = true
 plugins = ["pydantic.mypy"]

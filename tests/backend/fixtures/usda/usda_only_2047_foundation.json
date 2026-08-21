@@ -1,0 +1,14 @@
+{
+  "_fixture_note": "从真实下载文件 foundation_food_json_2026-04-30 里截取,fdcId=1750339——真实记录里没有 id=1008,只有 id=2047/2048,验证按优先级取 2047(不是 2048),单位过滤(kcal 而非 kJ)不受影响",
+  "fdcId": 1750339,
+  "description": "Apples, red delicious, with skin, raw",
+  "dataType": "Foundation",
+  "foodNutrients": [
+    {"nutrient": {"id": 1004, "name": "Total lipid (fat)", "unitName": "g"}, "amount": 0.212},
+    {"nutrient": {"id": 1079, "name": "Fiber, total dietary", "unitName": "g"}, "amount": 2.04},
+    {"nutrient": {"id": 1003, "name": "Protein", "unitName": "g"}, "amount": 0.188},
+    {"nutrient": {"id": 1005, "name": "Carbohydrate, by difference", "unitName": "g"}, "amount": 14.8},
+    {"nutrient": {"id": 2047, "name": "Energy (Atwater General Factors)", "unitName": "kcal"}, "amount": 61.8},
+    {"nutrient": {"id": 2048, "name": "Energy (Atwater Specific Factors)", "unitName": "kcal"}, "amount": 55.6}
+  ]
+}

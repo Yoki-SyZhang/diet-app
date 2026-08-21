@@ -1,0 +1,9 @@
+{
+  "_fixture_note": "人工构造,非真实数据——id 对但 name/unit 不对的条目不能被误当成能量值命中;真实数据里'看起来像但其实不是'的占位行(如 id=2045 name=Proximates,见 ADR 0002)证明了必须三重匹配,这里用 id=1008 但 unitName 错误的合成条目验证同一防线",
+  "fdcId": 900002,
+  "description": "SYNTHETIC: id correct but unit wrong, must not match",
+  "dataType": "Foundation",
+  "foodNutrients": [
+    {"nutrient": {"id": 1008, "name": "Energy", "unitName": "kJ"}, "amount": 500.0}
+  ]
+}

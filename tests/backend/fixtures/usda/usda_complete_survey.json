@@ -1,0 +1,13 @@
+{
+  "_fixture_note": "从真实下载文件 survey_food_json_2024-10-31 里截取,fdcId=2705403,只保留目标营养素条目",
+  "fdcId": 2705403,
+  "description": "Non-dairy milk, NFS",
+  "dataType": "Survey (FNDDS)",
+  "foodNutrients": [
+    {"nutrient": {"id": 1003, "name": "Protein", "unitName": "g"}, "amount": 1.14},
+    {"nutrient": {"id": 1004, "name": "Total lipid (fat)", "unitName": "g"}, "amount": 1.6},
+    {"nutrient": {"id": 1005, "name": "Carbohydrate, by difference", "unitName": "g"}, "amount": 3.04},
+    {"nutrient": {"id": 1008, "name": "Energy", "unitName": "kcal"}, "amount": 31.0},
+    {"nutrient": {"id": 1079, "name": "Fiber, total dietary", "unitName": "g"}, "amount": 0.1}
+  ]
+}

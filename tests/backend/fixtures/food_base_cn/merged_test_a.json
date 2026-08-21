@@ -1,0 +1,42 @@
+[
+  {
+    "foodCode": "T001",
+    "foodName": "正常食物",
+    "edible": "85.5",
+    "energyKCal": "120",
+    "protein": "5.0",
+    "fat": "2.0",
+    "CHO": "20.0",
+    "dietaryFiber": "1.0"
+  },
+  {
+    "foodCode": "T002",
+    "foodName": "痕量与合法零值食物",
+    "edible": "100",
+    "energyKCal": "50",
+    "protein": "Tr",
+    "fat": "0",
+    "CHO": "10",
+    "dietaryFiber": "0.5"
+  },
+  {
+    "foodCode": "T003",
+    "foodName": "破折号食物",
+    "edible": "90",
+    "energyKCal": "80",
+    "protein": "3.0",
+    "fat": "—",
+    "CHO": "15",
+    "dietaryFiber": "—"
+  },
+  {
+    "foodCode": "T006",
+    "foodName": "全空食物",
+    "edible": "",
+    "energyKCal": "",
+    "protein": "",
+    "fat": "",
+    "CHO": "",
+    "dietaryFiber": ""
+  }
+]

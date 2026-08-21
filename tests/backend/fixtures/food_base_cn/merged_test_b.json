@@ -1,0 +1,42 @@
+[
+  {
+    "foodCode": "T004",
+    "foodName": "星号脚注食物",
+    "edible": "100",
+    "energyKCal": "899*",
+    "protein": "1.0",
+    "fat": "99.9",
+    "CHO": "0",
+    "dietaryFiber": "—"
+  },
+  {
+    "foodCode": "T005",
+    "foodName": "未知垃圾值食物",
+    "edible": "100",
+    "energyKCal": "un",
+    "protein": "5.4",
+    "fat": "0.1",
+    "CHO": "72.9",
+    "dietaryFiber": "—"
+  },
+  {
+    "foodCode": "T007",
+    "foodName": "可食率越界食物",
+    "edible": "150",
+    "energyKCal": "100",
+    "protein": "2.0",
+    "fat": "2.0",
+    "CHO": "10",
+    "dietaryFiber": "1.0"
+  },
+  {
+    "foodCode": "T001",
+    "foodName": "重复编码食物(应被丢弃)",
+    "edible": "10",
+    "energyKCal": "10",
+    "protein": "1.0",
+    "fat": "1.0",
+    "CHO": "1.0",
+    "dietaryFiber": "1.0"
+  }
+]

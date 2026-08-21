@@ -38,7 +38,7 @@
 
 - 5 个目标营养字段(`energyKCal`/`protein`/`fat`/`CHO`/`dietaryFiber`)里的脏值:`Tr`(痕量)、`—`(破折号)、空字符串是文档已知的三种;另外发现 **18 条 `energyKCal` 带尾部星号**(如上面 `192001`/`192006`,全部集中在"植物油"类),以及 **1 条无法识别的垃圾值 `"un"`**(上面的 `052005`,海冻菜类,同一条记录里 `dietaryFiber` 还是 `—`——证明脏值判断必须按字段独立进行,不能"一条记录里出现一个脏值就整条标记")。
 - `foodCode=192011`(麻子籽)是唯一一条**记录级整体缺失**的记录——不只是我们要的 `edible`+5 个营养字段,是这条记录的全部 31 个字段(连 `remark`)都是空字符串。
-- `edible` 字段:1655 条是干净数值,范围 **7.0–100.0**;剩下 2 条脏值都出在同一条全空记录(`192011`)上,分别是 `""` 和 `—`。
+- `edible` 字段:1655 条是干净数值,范围 **7.0–100.0**;剩下 2 条脏值分属两条不同记录——`192011`(麻子籽,即上面的全空记录,值为 `""`)和 `044501`(薤,值为 `—`,但这条记录的 `energyKCal`/`dietaryFiber` 等字段有正常数值,不满足全空排除条件,仍会插入,只是 `edible_pct` 为 `null`)。
 
 **这些新发现的处理方式**(已定,写代码时直接照做,不用再讨论):
 - 尾部星号(`"899*"`)= 中国食物成分表的标准脚注,表示"换算/计算值"而非"缺失"——**去掉星号后按数字解析**,不当脏值处理。
@@ -75,11 +75,11 @@ tests/backend/
                                           # dataType 和期望值不符(测 data_type_mismatches)
   test_demo_02_food_base_cn_import.py                # 单元:脏值解析(含星号脚注返回数字、"0"不当缺失)、去重、全空记录处理、DataAnomalyError 防护,用手写 fixture,跑在 migrated_engine 临时库
   test_demo_02_food_base_cn_import_real_snapshot.py  # 用真实本地 61 文件目录跑,断言精确插入 1656 条 + 已知脏值分布(18 星号/1 个"un");默认 skip、DIETAPP_REQUIRE_SNAPSHOTS=1 时改为 fail,不挡没有本地快照的机器
-  test_demo_02_import_cli.py                          # food_base_cn 的 run_import(config) 防护措施测试:dry-run 不连库、未确认拒绝真实库写入、重复导入拒绝、replace 中途失败整体回滚、数据异常默认拒绝(DataAnomalyError)
+  test_demo_02_import_cli.py                          # food_base_cn 的 run_import(config) 防护措施测试:dry-run 不连库、显式传入和默认值相同的真实库路径也必须被判定为真实库(不能只看 database_url 是不是空字符串)、空 source_dir 拒绝(EmptySourceError)、重复导入拒绝、replace 中途失败整体回滚、数据异常默认拒绝(DataAnomalyError)、report_path 非空时报告落盘
   test_demo_02_usda_adapter.py                        # 用真实截取+人工构造的 fixture 断言 id+name+unit 三重匹配(id 对但 name/unit 不对不能命中)、多个 kcal id 同时出现时按优先级取值不相加、缺失给 null、真实 0 值保留为 0
   test_demo_02_food_base_us_import.py                 # 单元:跳过 null 数组项、missing_nutrient_counts 统计、dataType 一致性校验、insert_food_base_us_records 对 migrated_engine 临时库精确插入预期行数,用小 fixture
   test_demo_02_food_base_us_import_real_snapshot.py   # 对 import_food_base_us_snapshot(不是分别调两次单文件函数)跑真实下载的 Foundation+Survey 文件,断言精确 363+5432=5795 条、0 处跨数据集 fdc_id 冲突;默认 skip、DIETAPP_REQUIRE_SNAPSHOTS=1 时改为 fail
-  test_demo_02_us_import_cli.py                       # food_base_us 的 run_import(config) 防护措施测试:dry-run 不连库、未确认拒绝真实库写入、已有数据且未传 --replace 拒绝(AlreadyImportedError,和 cn 对称)、replace 中途失败整体回滚、数据异常默认拒绝(DataAnomalyError)
+  test_demo_02_us_import_cli.py                       # food_base_us 的 run_import(config) 防护措施测试:dry-run 不连库、真实库路径判定同 cn、空文件拒绝(EmptySourceError)、已有数据且未传 --replace 拒绝(AlreadyImportedError,和 cn 对称)、replace 中途失败整体回滚、dataType 异常默认拒绝可被 --allow-anomalies 放行、跨数据集 fdc_id 冲突永远硬失败(--allow-anomalies 也救不了,因为 fdc_id 是主键)、report_path 非空时报告落盘
 
 docs/data/food_base-import-log.md   # 已改:加了 food_base_us 的版本锁定表,划掉旧的"USDA 不适用版本锁定"说明(见上面 1.5 段落)
 ```
@@ -186,26 +186,33 @@ class ImportConfig:
     confirm_real_db: bool = False
     replace: bool = False
     allow_anomalies: bool = False     # 见下面 DataAnomalyError
+    report_path: Path | None = None   # None = 不落盘;main() 默认写到 source_dir/import_report.txt
 
 class AlreadyImportedError(Exception): ...          # 表里已有任何行(不论来自哪个 source_commit)且未传 --replace
 class ConfirmationRequiredError(Exception): ...       # 非 dry-run 且指向真实库但未传 --confirm-real-db
 class DataAnomalyError(Exception): ...                # report.duplicate_food_codes 或 report.edible_out_of_range
                                                         # 非空且未传 --allow-anomalies
+class EmptySourceError(Exception): ...                # 没有解析出任何可插入记录,永远硬失败(不受
+                                                        # --allow-anomalies 影响),防止配合 --replace
+                                                        # 清空整表后只插入 0 行
 
 def run_import(config: ImportConfig) -> ValidationReport:
     """CLI 的全部业务逻辑在这里,不摸 argparse/sys.argv,单测直接构造不同的 ImportConfig 组合调用:
     - dry_run=True(默认): 只跑 parse_food_base_cn_directory,函数内部这条分支完全不 import/调用
       任何 db.py/create_engine/Session 相关代码——不是"打开了连接但不写",是压根不创建连接。报告照常
-      生成、如实展示重复编码/越界可食率,不因为将来可能被拒绝就不统计。
-    - dry_run=False 且 database_url 解析后就是真实 dietapp.db 路径 且 confirm_real_db=False:
-      直接抛 ConfirmationRequiredError,同样不打开连接。
+      生成、如实展示重复编码/越界可食率,不因为将来可能被拒绝就不统计;report_path 非空时把报告落盘。
+    - dry_run=False 且没有解析出任何可插入记录:抛 EmptySourceError,不写库——这条检查在
+      confirm_real_db 检查之前,和真实库判定无关,纯粹是"source_dir 配错了"的兜底。
+    - dry_run=False 且**按实际 sqlite 文件路径解析比较**(不是只看 `database_url` 是不是空字符串——
+      显式传入一个和默认值解析结果相同的真实路径也必须算"指向真实库",否则这道确认形同虚设)确认目标
+      就是真实 dietapp.db,且 confirm_real_db=False:直接抛 ConfirmationRequiredError,同样不打开连接。
     - dry_run=False 且(report.duplicate_food_codes 或 report.edible_out_of_range 非空)且
       allow_anomalies=False:抛 DataAnomalyError,不写库。当前快照下这两项都是空的、不会触发,但下次
       重新锁定新版本快照如果出现重复编码/可食率越界,不能在没人看过报告的情况下悄悄写库——必须显式加
       `--allow-anomalies` 才会按"去重保留第一条、越界值原样插入"的既有规则继续执行。
     - dry_run=False 且表里已有任何行(不论是不是同一个 source_commit)且 replace=False:抛 AlreadyImportedError,
       避免"新旧不同版本的行同时留在表里"这种中间态被默认放行。
-    - dry_run=False 且 replace=True:按上面"原子性"的要求,删+插在一个事务里。
+    - dry_run=False 且 replace=True:按上面"原子性"的要求,删+插在一个事务里,成功后 report_path 非空则落盘。
     """
 
 def main(argv: list[str] | None = None) -> int:
@@ -219,7 +226,7 @@ def main(argv: list[str] | None = None) -> int:
     两个都传,`--apply` 指向非真实库路径(比如临时测试文件)时不需要 `--confirm-real-db`。"""
 ```
 
-CLI 参数:`--source-dir`(默认取 `docs/data/food_base-import-log.md` 记录的本地路径)、`--source-commit`(默认见上面 `ImportConfig`)、`--database-url`(默认空,即真实文件)、`--apply`(`store_true`,默认不传;传了才把 `ImportConfig.dry_run` 置为 `False`,即"真的执行")、`--confirm-real-db`(目标是真实 `dietapp.db` 时,必须和 `--apply` 一起传)、`--replace`、`--allow-anomalies`(默认不传;报告里有重复编码或越界可食率时,不传就直接拒绝执行)——除 `--apply` 需要取反映射,其余直接映射进 `ImportConfig` 的对应字段。`main()` 这层至少要有一个最小烟雾测试断言"不传 `--apply` 时 `ImportConfig.dry_run is True`、传了 `--apply` 时是 `False`",防止这类参数映射错误只能靠人工跑一遍才发现。
+CLI 参数:`--source-dir`(默认取 `docs/data/food_base-import-log.md` 记录的本地路径)、`--source-commit`(默认见上面 `ImportConfig`)、`--database-url`(默认空,即真实文件)、`--apply`(`store_true`,默认不传;传了才把 `ImportConfig.dry_run` 置为 `False`,即"真的执行")、`--confirm-real-db`(目标是真实 `dietapp.db` 时,必须和 `--apply` 一起传)、`--replace`、`--allow-anomalies`(默认不传;报告里有重复编码或越界可食率时,不传就直接拒绝执行)、`--report-path`(默认不传;`main()` 里会补一个默认值 `source-dir/import_report.txt`,和这个目录下已有的 `MANIFEST.txt` 放一起,`run_import()` 本身不替它猜默认路径,只在 `report_path` 非 `None` 时落盘,避免单测跑 `run_import()` 时污染 fixture 目录)——除 `--apply` 需要取反映射、`--report-path` 需要 `main()` 补默认值,其余直接映射进 `ImportConfig` 的对应字段。`main()` 这层至少要有一个最小烟雾测试断言"不传 `--apply` 时 `ImportConfig.dry_run is True`、传了 `--apply` 时是 `False`",防止这类参数映射错误只能靠人工跑一遍才发现。
 
 ---
 
@@ -246,14 +253,25 @@ USDA 文档):
   问题,不是我们的 bug),真实食物记录 **363** 条,`fdcId` 互不重复。
 - Survey (FNDDS):JSON 数组长度 5432,**没有 null 占位项**,`fdcId` 互不重复。
 - 两个数据集的 `fdcId` **互不重叠**(已实测确认,0 交集)——两个文件的记录一起整表插入时不用担心撞键。
-- **能量字段的关键发现,推翻了原计划的假设**:原计划认为"Foundation Foods 新口径优先用 2047/2048,
-  1008 只是兼容兜底,要按 dataType 分别定优先级"。实测 363 条 Foundation + 5432 条 Survey 记录里,能量
-  条目**只出现过 `(nutrient.id=1008, unitName="kcal")`**(以及不参与匹配的 `id=1062 unitName="kJ"`),
-  `id=2047`/`2048` **一次都没出现过**。所以改回**一份共享优先级列表**,不再按 dataType 分流;2047/2048
-  仍然保留在候选里当防御性兜底(万一未来版本引入),但不是"实测验证过一定会用到"的设计。
-- Foundation 数据本身**相当稀疏**:363 条里 268 条(约 74%)压根没有任何"Energy"条目(不是取不到值,是
-  这条食物没有能量数据);Protein/Fat/Carb/Fiber 四项覆盖率分别是 352/340/321/185(fiber 最低,约 51%)。
-  Survey 数据几乎完整:5431/5432 条同时具备全部 5 项。
+- **能量字段的关键发现,推翻了原计划的假设,也纠正了本文档更早一版的误判**:原计划认为"Foundation
+  Foods 新口径优先用 2047/2048,1008 只是兼容兜底,要按 dataType 分别定优先级"——实测证明确实不需要按
+  dataType 分流,但理由和本文档曾经写的不一样:**`id=2047`(Energy, Atwater General Factors)在
+  Foundation 里出现 226 次、`id=2048`(Atwater Specific Factors)出现 199 次,不是"一次都没出现过"**
+  (之前那句话是只检查了 `id=1008` 得出的错误结论,已用脚本重新遍历全部 `foodNutrients` 数组订正)。
+  真实分布:95 条记录靠 `id=1008` 取到能量值,226 条记录**压根没有 `id=1008`、只能靠 `id=2047`**
+  取值(`id=2048` 总是和 `id=2047` 同记录同时出现,按"1008→2047→2048 命中即停"的优先级永远轮不到它被
+  选中,在当前数据下确实是纯防御性兜底,但 `2047` 不是),剩下 42 条三个 id 都没有、真正没有能量数据。
+  Survey 5432 条里能量条目**只出现过 `id=1008`**,`2047`/`2048` 一次都没出现——"两个数据集共用一份
+  优先级列表、不按 dataType 分流"这个设计结论不变,只是"2047/2048 全局都用不到"这个描述是错的:应该是
+  "`2047` 在 Foundation 里高频被选中、在 Survey 里从不被选中;`2048` 目前两个数据集里都测不到会被
+  选中的真实场景"。且已确认真实数据里 `id=1008` 与 `id=2047`/`2048` **从不在同一条记录里同时出现**
+  (`has_1008_and_also_2047_or_2048 = 0`),所以"多个能量候选同时出现,按优先级只取一个不相加"这条
+  行为本身在真实数据里永远测不到,下面测试计划里的人工构造 fixture 仍然是唯一能验证它的手段。
+- Foundation 数据本身**相当稀疏**:363 条里按"1008→2047→2048 优先级取值后仍然没有任何能量值"的口径,
+  **42 条**(约 12%)真正没有能量数据(不是之前误写的 268 条——268 是只统计 `id=1008` 缺失、没算上
+  `2047` 兜底命中的错误数字);Protein/Fat/Carb/Fiber 四项覆盖率分别是 352/340/321/185(fiber 最低,
+  约 51%,这四项统计没有受本次纠错影响,和之前一致)。Survey 数据几乎完整:5431/5432 条同时具备全部
+  5 项。
 - Protein(1003)/Total lipid (fat)(1004)/Carbohydrate, by difference(1005)/Fiber, total dietary
   (1079)四项 `unitName` 全部实测为 `"g"`,和原计划假设一致,不用改。
 - **合法 `amount=0` 的真实记录很充足**(Foundation 40 处、Survey 1899 处)——这条不用像原计划那样担心
@@ -281,7 +299,9 @@ backend/scripts/
 
 ```python
 # 能量 id 优先级用一份共享列表,不按 dataType 分流:已用真实下载的 363(Foundation)+5432(Survey)条
-# 记录验证,两个数据集的能量条目只出现过 id=1008+unit=kcal,2047/2048 保留只是防御性兜底。
+# 记录验证。Survey 里能量条目只出现 id=1008+unit=kcal;Foundation 里 226 条记录没有 id=1008、
+# 靠 id=2047 取到能量值(不是防御性兜底,是这些记录唯一的能量来源),id=2048 目前两个数据集
+# 都测不到会被选中的真实场景,是唯一真正的纯防御性兜底(见上文"已用真实本地数据独立核实的事实")。
 ENERGY_KCAL_IDS = (1008, 2047, 2048)  # 依次尝试,命中第一个就停,绝不把多个能量候选相加
 PROTEIN_ID, FAT_ID, CARB_ID, FIBER_ID = 1003, 1004, 1005, 1079  # 已用真实数据核实 unitName 均为 "g"
 
@@ -361,9 +381,14 @@ def insert_food_base_us_records(session: Session, records: list[ParsedUsFoodReco
 ```python
 class AlreadyImportedError(Exception): ...          # 表里已有行且未传 --replace(和 cn 对称)
 class ConfirmationRequiredError(Exception): ...       # 非 dry-run 且指向真实库但未传 --confirm-real-db
-class DataAnomalyError(Exception): ...                # report.data_type_mismatches 或
-                                                        # report.cross_dataset_fdc_id_collisions
-                                                        # 非空且未传 --allow-anomalies(和 cn 对称)
+class DataAnomalyError(Exception): ...                # report.data_type_mismatches 非空且未传
+                                                        # --allow-anomalies;或 report.cross_dataset_fdc_id_collisions
+                                                        # 非空(这一条永远硬失败,--allow-anomalies 救不了——
+                                                        # fdc_id 是主键,插入两条同 fdc_id 记录必然真实撞唯一
+                                                        # 约束,"放行"没有意义,只会把干净的 ValueError 级错误
+                                                        # 换成更难看的 IntegrityError,必须先回去核对源文件)
+class EmptySourceError(Exception): ...                # 两个文件没有解析出任何可插入记录,永远硬失败,
+                                                        # 防止配合 --replace 清空整表后只插入 0 行
 
 @dataclass
 class UsImportConfig:
@@ -377,19 +402,25 @@ class UsImportConfig:
                                   # 再插入本次解析出的全部记录,删+插在同一事务里(原子性要求和
                                   # food_base_cn 的 --replace 一样,任何一步异常整体 rollback)
     allow_anomalies: bool = False  # 见上面 DataAnomalyError
+    report_path: Path | None = None  # None = 不落盘;main() 默认写到 food_base_us/import_report.txt
 
 def run_import(config: UsImportConfig) -> UsValidationReport:
     """和 food_base_cn 的 run_import 同样的防护措施,现在两者语义完全对称。内部调用的是
     import_food_base_us_snapshot(两个文件的协调入口),不是直接调 parse_us_food_base_file:
-    - dry_run=True(默认):只跑 import_food_base_us_snapshot,完全不建数据库连接。报告照常生成。
-    - dry_run=False 且指向真实库但 confirm_real_db=False:抛 ConfirmationRequiredError。
-    - dry_run=False 且(report.data_type_mismatches 或 report.cross_dataset_fdc_id_collisions
-      非空)且 allow_anomalies=False:抛 DataAnomalyError,不写库。当前两个真实文件下这两项都是空的,
-      不会触发,但下次重新锁定新版本时如果出现 dataType 不一致或跨数据集 fdc_id 冲突,不能在没人看过
-      报告的情况下悄悄写库。
+    - dry_run=True(默认):只跑 import_food_base_us_snapshot,完全不建数据库连接。报告照常生成,
+      report_path 非空时落盘。
+    - dry_run=False 且没有解析出任何可插入记录:抛 EmptySourceError,不写库。
+    - dry_run=False 且**按实际 sqlite 文件路径解析比较**(不是只看 database_url 是不是空字符串)
+      确认目标就是真实库,且 confirm_real_db=False:抛 ConfirmationRequiredError。
+    - dry_run=False 且 report.cross_dataset_fdc_id_collisions 非空:永远抛 DataAnomalyError,不受
+      allow_anomalies 影响——见上面 DataAnomalyError 的说明。
+    - dry_run=False 且 report.data_type_mismatches 非空且 allow_anomalies=False:抛 DataAnomalyError,
+      不写库。当前两个真实文件下这两项都是空的,不会触发,但下次重新锁定新版本时如果出现 dataType
+      不一致,不能在没人看过报告的情况下悄悄写库。
     - dry_run=False 且表里已有任何行且 replace=False:抛 AlreadyImportedError。
     - dry_run=False 且 replace=True:整表 DELETE + 全部记录 INSERT 包在同一显式事务里,
-      任何一条记录插入失败整体 rollback,不会留下"旧数据已删、新数据只插了一半"的中间态。"""
+      任何一条记录插入失败整体 rollback,不会留下"旧数据已删、新数据只插了一半"的中间态。
+      成功后 report_path 非空则落盘。"""
 
 def main(argv: list[str] | None = None) -> int: ...
     # CLI 用 --apply(store_true,默认不传)映射到 UsImportConfig.dry_run = not args.apply,
@@ -400,7 +431,9 @@ CLI 参数:`--foundation-json`/`--survey-json`(默认见上面路径)、`--datab
 `--apply`(`store_true`,默认不传;传了才把 `UsImportConfig.dry_run` 置为 `False`,和
 `import_food_base_cn.py` 同一套映射逻辑)、`--confirm-real-db`
 (目标是真实 `dietapp.db` 时必须和 `--apply` 一起传)、`--replace`、`--allow-anomalies`(默认不传;
-报告里有 dataType 不一致或跨数据集 fdc_id 冲突时,不传就直接拒绝执行)。
+报告里有 dataType 不一致时,不传就直接拒绝执行——跨数据集 fdc_id 冲突这条永远硬失败,这个参数救不了)、
+`--report-path`(默认不传;`main()` 补默认值 `food_base_us/import_report.txt`,和 cn 那边同一套"落盘
+默认值只在 main() 里算、run_import() 本身只在 report_path 非 None 时落盘"的设计)。
 
 > **为什么要用代码做 id+name+unit 匹配,而不是让 LLM 直接读 USDA 原始 JSON 取值**(这条结论不受本次
 > 方案变更影响,依然成立):准确说法不是"LLM 碰真实数据不可信"(它读到的确实是真数据,不是编的),而是
@@ -435,11 +468,11 @@ CLI 参数:`--foundation-json`/`--survey-json`(默认见上面路径)、`--datab
 |---|---|
 | `test_demo_02_food_base_cn_import.py` | `coerce_nutrient_value` 各状态(含星号脚注返回真实数字、`un`/`Tr`/`—`/空 返回 `None`、字符串 `"0"` 返回 `0.0` 不当缺失)、`parse_record` 脏值不转 0、`dedupe_by_food_code`(手写 fixture 里故意放一对重复 foodCode)、`filter_fully_null_records` 排除全空记录且计入报告、`insert_food_base_cn_records` 对 `migrated_engine` 临时库、重复插入同 `source_commit` 触发 `IntegrityError` |
 | `test_demo_02_food_base_cn_import_real_snapshot.py` | 对真实本地 61 文件目录跑 `parse_food_base_cn_directory` + 插入 `migrated_engine` 临时库,断言解析出 1657 条、过滤 1 条全空记录、**精确插入 1656 条**;另外断言已知的脏值分布本身,不只断行数——`report.dirty_value_counts["energyKCal"]["footnote_calculated"] == 18`(星号脚注)、`len(report.unrecognized_values) == 1`(唯一一条 `"un"`)。目录不存在时默认 `pytest.mark.skipif`,不挡没有本地快照的机器;但设了 `DIETAPP_REQUIRE_SNAPSHOTS=1` 环境变量时改成 `pytest.fail`,不允许跳过——1.4 的验收标准本身就是这份真实数据的精确记录数,不能出现"测试全绿但这条核心验收从没真正跑过"。本 PR 最终验收(向你汇报 done 之前)必须在设了这个环境变量的前提下跑一遍,贴命令+输出 |
-| `test_demo_02_import_cli.py` | 针对 `food_base_cn` 的 `run_import(config)` 这层纯函数,不碰 argparse:①`dry_run=True` 时 monkeypatch 掉 `create_engine`(断它没被调用过)来证明真的没开数据库连接;②`dry_run=False` + 指向"真实库"路径 + `confirm_real_db=False` → 断言抛 `ConfirmationRequiredError` 且没有任何行被写入;③表里已存在任意数据(不论是不是同一个 `source_commit`)+ `replace=False` → 断言抛 `AlreadyImportedError`;④`replace=True` 且插入过程中人为让某条记录触发异常(比如注入一条违反约束的记录) → 断言整个事务回滚,库里的**总行数**和执行前完全一致(不多不少,不是"旧的没了新的也没插完"的中间态);⑤用手写 fixture 故意造出重复 `food_code` 或越界 `edible_pct`,`allow_anomalies=False`(默认)→ 断言抛 `DataAnomalyError` 且没有任何行被写入;`allow_anomalies=True` → 断言按既有规则(去重保留第一条/越界值原样插入)正常写入 |
+| `test_demo_02_import_cli.py` | 针对 `food_base_cn` 的 `run_import(config)` 这层纯函数,不碰 argparse:①`dry_run=True` 时 monkeypatch 掉 `create_engine`(断它没被调用过)来证明真的没开数据库连接;②`dry_run=False` + 指向"真实库"路径 + `confirm_real_db=False` → 断言抛 `ConfirmationRequiredError` 且没有任何行被写入;②b **显式传入 `settings.database_url` 本身**(不是留空)+ `confirm_real_db=False` → 同样断言抛 `ConfirmationRequiredError` 且 `create_engine` 未被调用——防止"只判断 `database_url` 是不是空字符串"这种实现被显式传入的真实路径绕过;③表里已存在任意数据(不论是不是同一个 `source_commit`)+ `replace=False` → 断言抛 `AlreadyImportedError`;④`replace=True` 且插入过程中人为让某条记录触发异常(比如注入一条违反约束的记录) → 断言整个事务回滚,库里的**总行数**和执行前完全一致(不多不少,不是"旧的没了新的也没插完"的中间态);⑤用手写 fixture 故意造出重复 `food_code` 或越界 `edible_pct`,`allow_anomalies=False`(默认)→ 断言抛 `DataAnomalyError` 且没有任何行被写入;`allow_anomalies=True` → 断言按既有规则(去重保留第一条/越界值原样插入)正常写入;⑥`source_dir` 指向一个没有任何 `merged_*.json` 文件的空目录 + `replace=True` → 断言抛 `EmptySourceError`,且不影响已有数据(不会出现"清空整表后只插入 0 行") |
 | `test_demo_02_usda_adapter.py` | 从已下载的真实 Foundation/Survey 文件里**截取几条真实记录**存成 `tests/backend/fixtures/usda/` 下的小 fixture(不再是"录制 API 响应",直接从真实下载文件里挑),覆盖:①正常完整记录(id+name+unit 匹配对);②Foundation 里常见的"没有任何 Energy 条目"的记录(断言 `kcal_100g=None`,不是报错也不是当 0);③某营养素 `amount` 真实等于 0 的记录(Foundation/Survey 都有现成的,直接挑一条,不用合成)——断言保留为 `0.0` 而不是被判成缺失;④单位过滤:1008(kcal)+1062(kJ)同时出现,只取 kcal 那个,不折算 kJ→kcal;⑤**必须**用一条明确标注"人工构造,非真实数据"的最小 dict,同一条记录里同时放 id=1008 和 id=2047 两个 kcal 候选(数值不同)——断言取 1008 的值、不取 2047、不相加。真实数据里两个 kcal id 从未同时出现,这条测不到真实数据不代表可以跳过,SPEC §4.4.2 明确要求"同一记录出现多个能量值时按单一优先级选择",这正是唯一能证明优先级本身生效(而不只是证明单位过滤生效)的用例;⑥再用一条人工构造 fixture 验证"id 对但 name 或 unit 不对不能命中"——例如 id=1008 但 `unitName` 是 `"kJ"`,或 id=1008 但 `name` 不是 `"Energy"`,断言这种条目不被当作匹配(找不到候选时最终 `kcal_100g=None`,不会因为 id 对了就直接采信) |
 | `test_demo_02_food_base_us_import.py`(新增) | `parse_us_food_base_file` 跳过数组里的 `null` 占位项并计入 `null_array_entries_skipped`(用一个手写小 fixture,数组里故意放 1 个 `null` + 2-3 条真实记录);`missing_nutrient_counts` 统计正确;`insert_food_base_us_records` 对 `migrated_engine` 临时库精确插入预期行数,`created_at` 是合法 UTC 时间字符串 |
 | `test_demo_02_food_base_us_import_real_snapshot.py`(新增) | 对真实下载的 Foundation(363 条)+ Survey(5432 条)文件跑 `import_food_base_us_snapshot`(不是分别调两次 `parse_us_food_base_file` 再自己拼)+ 插入 `migrated_engine` 临时库,断言:总解析记录数精确等于 **5795**、`null_array_entries_skipped` 精确等于 **32**(全部来自 Foundation)、`data_type_mismatches` 和 `cross_dataset_fdc_id_collisions` 都是空列表。文件不存在时默认 `pytest.mark.skipif`,设了 `DIETAPP_REQUIRE_SNAPSHOTS=1` 时改成 `pytest.fail`(和 cn 那条同样的策略,理由一致),本 PR 最终验收时必须这样跑一遍 |
-| `test_demo_02_us_import_cli.py`(新增) | 针对 `food_base_us` 的 `run_import(config)`,和 cn 对称:①`dry_run=True` 时不建数据库连接;②`dry_run=False` + 真实库路径 + 未传 `confirm_real_db` → `ConfirmationRequiredError`;③表里已存在任意数据 + `replace=False` → `AlreadyImportedError`;④`replace=True` 且插入过程中人为触发异常 → 断言整个事务回滚,表内行数和执行前一致;⑤用手写 fixture 故意造出 dataType 不一致(比如 Foundation 文件里塞一条 `dataType` 写成别的值的记录)或跨数据集重复 `fdc_id`,`allow_anomalies=False`(默认)→ 断言抛 `DataAnomalyError` 且没有任何行被写入 |
+| `test_demo_02_us_import_cli.py`(新增) | 针对 `food_base_us` 的 `run_import(config)`,和 cn 对称:①`dry_run=True` 时不建数据库连接;②`dry_run=False` + 真实库路径 + 未传 `confirm_real_db` → `ConfirmationRequiredError`;②b 显式传入 `settings.database_url` 本身同样不能绕过(和 cn 对称);③表里已存在任意数据 + `replace=False` → `AlreadyImportedError`;④`replace=True` 且插入过程中人为触发异常 → 断言整个事务回滚,表内行数和执行前一致;⑤用手写 fixture 故意造出 dataType 不一致(比如 Foundation 文件里塞一条 `dataType` 写成别的值的记录),`allow_anomalies=False`(默认)→ 断言抛 `DataAnomalyError` 且没有任何行被写入;`allow_anomalies=True` → 断言正常写入;⑥用另一对手写 fixture 故意造出跨数据集重复 `fdc_id` → 即使传了 `allow_anomalies=True` 也断言仍然抛 `DataAnomalyError`(fdc_id 是主键,这条异常永远不可放行);⑦两个下载文件都解析出 0 条记录 + `replace=True` → 断言抛 `EmptySourceError`,不影响已有数据 |
 
 不新增 mock 依赖(不装 `respx`/`vcrpy`)——`httpx` 已是既有依赖,`httpx.MockTransport` 够用,符合"不为还没用到的需求提前抽象"。USDA 这边现在也用不上 `httpx.MockTransport` 了,直接读真实/截取的 JSON 文件即可,不需要 mock 网络请求。
 

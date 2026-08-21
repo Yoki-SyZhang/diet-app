@@ -1,0 +1,7 @@
+{
+  "_fixture_note": "从真实下载文件 foundation_food_json_2026-04-30 里截取,fdcId=746775——Foundation 里常见的'压根没有任何 Energy 条目'的记录,不是取不到值",
+  "fdcId": 746775,
+  "description": "Salt, table, iodized",
+  "dataType": "Foundation",
+  "foodNutrients": []
+}
