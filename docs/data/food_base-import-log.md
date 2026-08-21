@@ -12,4 +12,16 @@
 
 ## food_base_us
 
-USDA 来源（SPEC §4.4.2）走运行时 API 调用 + 结果缓存进 SQLite，不是静态文件导入，不适用这张表的版本锁定方式。
+和 `food_base_cn` 同样的"锁定版本快照导入"模式，不是运行时 API 调用+缓存（选型依据见决策记录 0005）。
+用**两个独立的数据集**，各自按自己的发布节奏单独锁定版本（不像 `food_base_cn` 只有一个来源）：
+
+| 数据集 | 锁定日期 | 来源 | 发布日期 | 下载 URL | 本地路径 |
+|---|---|---|---|---|---|
+| Foundation Foods | 2026-08-20 | USDA FoodData Central 批量下载 | 2026-04-30 | `https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_json_2026-04-30.zip` | `backend/data/food_base/food_base_us/foundation_food_json_2026-04-30/` |
+| Survey (FNDDS) | 2026-08-20 | USDA FoodData Central 批量下载 | 2024-10-31 | `https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_survey_food_json_2024-10-31.zip` | `backend/data/food_base/food_base_us/survey_food_json_2024-10-31/` |
+
+两者都不需要 API key（公开静态文件下载）。**明确排除** `SR Legacy`（USDA 官方标注为已冻结的历史数据库，
+最后一次发布是 2018-04，不再更新）和 `Branded Foods`（全是美国商超品牌预包装食品，解压后约 3.1G，不适合
+中国用户的家常餐食场景，体量也远超需要）。完整校验信息（结构核实、能量字段实测分布、fdc_id 唯一性核对）
+见各自目录下的 `MANIFEST.txt`。以后重新锁定某个数据集的新版本时，同样是新建一个按新发布日期命名的兄弟
+目录，不覆盖旧目录——两个数据集各自独立更新，不要求同步重新锁定。
