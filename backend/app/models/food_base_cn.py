@@ -5,8 +5,10 @@ from app.models.base import Base
 
 
 class FoodBaseCn(Base):
-    """中国食物成分数据(SPEC §4.4.1)。按 (food_code, source_commit) 唯一,
-    允许不同锁定 commit 的同一 food_code 并存,不强制覆盖旧版本。"""
+    """中国食物成分数据(SPEC §4.4.1,维护模型见 ADR 0005)。表内容是当前锁定版本的
+    整体重建结果,不是增量缓存:重新导入时对全部当前锁定的本地来源整表覆盖写入,
+    不同旧版本的行不会同时留在表里被查询到。(food_code, source_commit) 的唯一约束
+    只防同一次导入内部的重复编码,不代表设计上允许新旧版本长期并存。"""
 
     __tablename__ = "food_base_cn"
     __table_args__ = (

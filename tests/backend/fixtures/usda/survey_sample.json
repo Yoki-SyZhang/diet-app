@@ -1,0 +1,24 @@
+{
+  "SurveyFoods": [
+    {
+      "fdcId": 2705403,
+      "description": "Non-dairy milk, NFS",
+      "dataType": "Survey (FNDDS)",
+      "foodNutrients": [
+        {"nutrient": {"id": 1003, "name": "Protein", "unitName": "g"}, "amount": 1.14},
+        {"nutrient": {"id": 1004, "name": "Total lipid (fat)", "unitName": "g"}, "amount": 1.6},
+        {"nutrient": {"id": 1005, "name": "Carbohydrate, by difference", "unitName": "g"}, "amount": 3.04},
+        {"nutrient": {"id": 1008, "name": "Energy", "unitName": "kcal"}, "amount": 31.0},
+        {"nutrient": {"id": 1079, "name": "Fiber, total dietary", "unitName": "g"}, "amount": 0.1}
+      ]
+    },
+    {
+      "fdcId": 900102,
+      "description": "SYNTHETIC: 跨数据集共享的 fdc_id,和 foundation_sample.json 里的 900102 撞了",
+      "dataType": "Survey (FNDDS)",
+      "foodNutrients": [
+        {"nutrient": {"id": 1008, "name": "Energy", "unitName": "kcal"}, "amount": 25.0}
+      ]
+    }
+  ]
+}

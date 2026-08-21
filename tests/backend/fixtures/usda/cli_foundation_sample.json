@@ -1,0 +1,20 @@
+{
+  "FoundationFoods": [
+    {
+      "fdcId": 910001,
+      "description": "CLI 测试:dataType 故意写错,测试 DataAnomalyError 的 data_type_mismatches 分支",
+      "dataType": "Survey (FNDDS)",
+      "foodNutrients": [
+        {"nutrient": {"id": 1008, "name": "Energy", "unitName": "kcal"}, "amount": 10.0}
+      ]
+    },
+    {
+      "fdcId": 910002,
+      "description": "CLI 测试:正常记录",
+      "dataType": "Foundation",
+      "foodNutrients": [
+        {"nutrient": {"id": 1008, "name": "Energy", "unitName": "kcal"}, "amount": 20.0}
+      ]
+    }
+  ]
+}

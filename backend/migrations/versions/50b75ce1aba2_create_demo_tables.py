@@ -71,7 +71,7 @@ def upgrade() -> None:
     sa.Column('protein_100g', sa.REAL(), nullable=True),
     sa.Column('fat_100g', sa.REAL(), nullable=True),
     sa.Column('fiber_100g', sa.REAL(), nullable=True),
-    sa.Column('cached_at', sa.Text(), nullable=False),
+    sa.Column('created_at', sa.Text(), nullable=False),
     sa.PrimaryKeyConstraint('fdc_id')
     )
     op.create_table('meal_entry',

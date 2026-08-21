@@ -1,0 +1,12 @@
+{
+  "SurveyFoods": [
+    {
+      "fdcId": 910003,
+      "description": "CLI 测试:正常记录",
+      "dataType": "Survey (FNDDS)",
+      "foodNutrients": [
+        {"nutrient": {"id": 1008, "name": "Energy", "unitName": "kcal"}, "amount": 30.0}
+      ]
+    }
+  ]
+}
