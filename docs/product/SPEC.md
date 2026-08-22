@@ -267,22 +267,22 @@ USDA 表导入 [FoodData Central](https://fdc.nal.usda.gov/) 官方批量下载�
 | food_name         | 用户口径食物名                                                       |
 | category          | staple/meat/vegetable/fruit/dessert/snack/dish/beverage/other        |
 | unit              | g 或 serving                                                         |
-| preparation_state | raw/cooked/recipe                                                    |
+| preparation_state | raw/cooked/ready_to_consume/recipe                                   |
 | kcal_100g         | 每 100g 可食部热量                                                   |
 | carb_100g         | 每 100g 可食部碳水                                                   |
 | protein_100g      | 每 100g 可食部蛋白质                                                 |
 | fat_100g          | 每 100g 可食部脂肪                                                   |
 | fiber_100g        | 每 100g 可食部膳食纤维                                               |
 | source_tag        | 原始营养来源；decompose_estimate 保存后仍保持该值，recipe 使用 user_create |
-| components        | 仅食谱使用；每项只包含食物名、克重和 raw/cooked                      |
+| components        | 仅食谱使用；每项只包含食物名、克重和 raw/cooked/ready_to_consume     |
 | updated_at        | UTC-0                                                                |
 
 常吃库遵循以下约束：
 
 | preparation_state | unit    | components                                    |
 | ----------------- | ------- | --------------------------------------------- |
-| raw / cooked      | g       | 空                                            |
-| recipe            | serving | 非空；组成项只能是 raw/cooked，不允许食谱嵌套 |
+| raw / cooked / ready_to_consume | g       | 空                              |
+| recipe            | serving | 非空；组成项只能是 raw/cooked/ready_to_consume，不允许食谱嵌套 |
 
 一份 recipe 由整份 `components` 定义，其总克重为各组成项克重之和；创建或修改食谱时确认其营养快照，之后按份数复用，不因外部基础数据变化而静默改变。唯一性按 `(food_name, preparation_state)` 判定；不同做法仍体现在 `food_name` 中。
 
@@ -397,7 +397,9 @@ BMR 使用 `user_profile` 的基础信息，并从 `body_metric` 分别读取按
 
 所有入口在营养计算前归一为食物名、数量、单位、餐次和 `preparation_state`，其中单位只允许 `g` 或 `serving`。普通食物的“个、碗、盘、大份”等描述由 LLM 在本次解析中估算为可食部克重；`serving` 只表示已兼容命中的个人固定食谱。LLM 不生成营养值，清蒸、油炸、红烧等做法仍保留在食物名称中。
 
-查询适配器从 §4.4 两个来源表生成临时统一候选，供本次匹配、确认和营养计算使用；临时候选不是第三张基础表，也不反写外部来源记录。外部候选只有 raw/cooked/unknown，不产生 recipe；不能可靠判断生熟状态时保持 unknown，等待用户确认。
+`preparation_state` 取值固定四选一：`raw`（按烹饪前重量计算）、`cooked`（按烹饪后重量计算）、`ready_to_consume`（食物本身已是可直接食用/饮用的成品，生熟区分对本次每 100g 营养口径没有实际意义，如牛奶、酸奶、面包、蛋糕、奶酪、饮料、罐头食品；不等于 `recipe`——`recipe` 专指用户在常吃库保存的固定配方，见 §4.5）、`unknown`（确实无法判断生熟，等待用户确认；不能用 `unknown` 表示“这个食物不适用生熟区分”，那种情况用 `ready_to_consume`）。只有生重/熟重会明显影响每 100g 营养口径、但当前信息又不足以判断时才追问生熟；`ready_to_consume` 食物不触发这类追问。
+
+查询适配器从 §4.4 两个来源表生成临时统一候选，供本次匹配、确认和营养计算使用；临时候选不是第三张基础表，也不反写外部来源记录。外部候选只有 raw/cooked/ready_to_consume/unknown，不产生 recipe；不能可靠判断生熟状态时保持 unknown，等待用户确认。
 
 ### 7.2 四级查询链
 
@@ -466,9 +468,9 @@ BMR 使用 `user_profile` 的基础信息，并从 `body_metric` 分别读取按
 
 常吃库逻辑只在本节维护：
 
-1. **查询复用**：按食物名称语义、`preparation_state` 和 unit 召回候选，并统一按 §7.2 消歧；raw/cooked 按克重计算，recipe 按固定营养快照和本次份数计算。`meal_entry` 只写入归一后的数量、单位、营养快照和原 `source_tag`，不保存常吃库关联。
-2. **从餐次保存**：普通 g 记录可利用仍在解析上下文中的标准营养、生熟状态和来源生成 raw/cooked 常吃候选；若从既有 `meal_entry` 发起，则重新查询并确认，不能假设短期行保存了这些食物库字段。
-3. **主动创建食谱**：recipe 必须由用户明确创建并确认完整 `components`；每项只含食物名、克重和 raw/cooked，整份列表定义一份并生成固定营养快照。
+1. **查询复用**：按食物名称语义、`preparation_state` 和 unit 召回候选，并统一按 §7.2 消歧；raw/cooked/ready_to_consume 按克重计算，recipe 按固定营养快照和本次份数计算。`meal_entry` 只写入归一后的数量、单位、营养快照和原 `source_tag`，不保存常吃库关联。
+2. **从餐次保存**：普通 g 记录可利用仍在解析上下文中的标准营养、生熟状态和来源生成 raw/cooked/ready_to_consume 常吃候选；若从既有 `meal_entry` 发起，则重新查询并确认，不能假设短期行保存了这些食物库字段。
+3. **主动创建食谱**：recipe 必须由用户明确创建并确认完整 `components`；每项只含食物名、克重和 raw/cooked/ready_to_consume，整份列表定义一份并生成固定营养快照。
 4. **相似项检查**：写入前先按 category、生熟状态和名称/别名做后端粗筛；存在候选时再用 LLM 做语义辅助判断。LLM 只产生候选解释，不能自行覆盖。
 5. **选择**：用户可新增为独立食物、选用已有项，或以新值更新已有项。所有对比同时显示五项营养、`preparation_state`、unit、食谱组成摘要和来源。
 6. **更新**：按 `food_id` 定位，可修改名称、营养、`preparation_state`、unit 和食谱组成，但必须持续满足 §4.5 的约束；不回溯任何历史 `meal_entry`。
@@ -567,7 +569,7 @@ LLM 只输出操作草稿；用户 Confirm 后按 §6.2/§7.5 执行。
   "unit": "serving", "preparation_state": "recipe",
   "components": [
     { "food_name": "燕麦片", "grams": 40, "preparation_state": "raw" },
-    { "food_name": "牛奶", "grams": 200, "preparation_state": "cooked" },
+    { "food_name": "牛奶", "grams": 200, "preparation_state": "ready_to_consume" },
     { "food_name": "香蕉", "grams": 80, "preparation_state": "raw" }] }
 ```
 
@@ -575,7 +577,7 @@ LLM 只输出操作草稿；用户 Confirm 后按 §6.2/§7.5 执行。
 { "action": "update_favorite_draft", "food_id": 42,
   "changes": { "components": [
     { "food_name": "燕麦片", "grams": 50, "preparation_state": "raw" },
-    { "food_name": "牛奶", "grams": 200, "preparation_state": "cooked" },
+    { "food_name": "牛奶", "grams": 200, "preparation_state": "ready_to_consume" },
     { "food_name": "香蕉", "grams": 80, "preparation_state": "raw" }] } }
 ```
 
@@ -583,7 +585,7 @@ LLM 只输出操作草稿；用户 Confirm 后按 §6.2/§7.5 执行。
 {"action":"delete_favorite_draft","food_id":42}
 ```
 
-只有 recipe 允许生成 `components`，组成项只能是 raw/cooked；系统据此生成食谱营养候选，用户确认后固定为该食谱的营养快照。所有意图在用户确认前均可撤销。
+只有 recipe 允许生成 `components`，组成项只能是 raw/cooked/ready_to_consume；系统据此生成食谱营养候选，用户确认后固定为该食谱的营养快照。所有意图在用户确认前均可撤销。
 
 ### 8.5 第④级拆解契约
 

@@ -1,0 +1,61 @@
+{
+  "summary": {
+    "total_rows": 111,
+    "service_unavailable_count": 0,
+    "scoreable_rows": 111,
+    "first_attempt_legal_rate": 1.0,
+    "final_legal_rate": 1.0,
+    "semantic_scoreable_rows": 111,
+    "semantic_accuracy": 0.963963963963964
+  },
+  "failures": [
+    {
+      "id": "45",
+      "category": "missing_quantity",
+      "input_text": "我吃了熟鸡胸肉",
+      "expected_outcome": "needs_clarification",
+      "final_outcome": "resolved",
+      "final_message": null,
+      "attempts": [
+        "legal"
+      ],
+      "error": null
+    },
+    {
+      "id": "52",
+      "category": "missing_quantity",
+      "input_text": "我吃了烤玉米",
+      "expected_outcome": "needs_clarification",
+      "final_outcome": "resolved",
+      "final_message": null,
+      "attempts": [
+        "legal"
+      ],
+      "error": null
+    },
+    {
+      "id": "53",
+      "category": "missing_quantity",
+      "input_text": "晚饭吃了蒜蓉西兰花",
+      "expected_outcome": "needs_clarification",
+      "final_outcome": "resolved",
+      "final_message": null,
+      "attempts": [
+        "legal"
+      ],
+      "error": null
+    },
+    {
+      "id": "54",
+      "category": "missing_quantity",
+      "input_text": "我吃了熟虾仁",
+      "expected_outcome": "needs_clarification",
+      "final_outcome": "resolved",
+      "final_message": null,
+      "attempts": [
+        "legal"
+      ],
+      "error": null
+    }
+  ]
+}
