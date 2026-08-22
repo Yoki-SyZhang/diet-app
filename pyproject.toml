@@ -1,7 +1,10 @@
 [tool.pytest.ini_options]
 pythonpath = ["backend"]
 testpaths = ["tests/backend"]
-addopts = ["--import-mode=importlib"]
+addopts = ["--import-mode=importlib", "-m", "not llm_live"]
+markers = [
+    "llm_live: 真实调用 DashScope,产生费用/依赖网络,默认不跑;用 `pytest -m llm_live` 显式触发",
+]
 
 [tool.ruff]
 target-version = "py311"
