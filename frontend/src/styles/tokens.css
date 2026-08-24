@@ -3,12 +3,47 @@
 :root {
   --color-primary: #2e8b62;
   --color-primary-hover: #22704e;
+  --color-primary-soft: #d4eadc;
   --color-bg: #edf2e9;
   --color-card: #ffffff;
   --color-text-primary: #141e19;
   --color-text-secondary: #657469;
   --color-text-tertiary: #7c8a82;
+  --color-text-placeholder: #859389;
+  --color-text-empty: #93a199;
+  --color-text-faint: #a2afa6;
+  --color-caret-faint: #c6cfc8;
+
+  /* 沉底小色块 / 分段控件轨道 / 用户气泡(bundle 观察值) */
+  --color-track: #e2e9df;
+  --color-bubble-user: #ddebdf;
+  --color-hover-soft: #e6ece3;
+  --color-empty-row: #f3f6f1;
+
+  /* 数据可信度徽标(design.md §2) */
+  --color-badge-text: #7c8a82;
+  --color-badge-bg: #eff3ed;
+  --color-warn-text: #b98a5e;
+  --color-warn-bg: #f7ede1;
+
+  /* 危险色:design.md §7 Gap(bundle 未定义),1.9 删除/错误态先用低饱和红,
+     后续视觉收敛时再统一 */
+  --color-danger: #c25e5e;
+  --color-danger-bg: #f7e5e1;
+
+  /* 分割线 / 描边(design.md §2 硬规则) */
+  --border-hairline: rgba(35, 48, 42, 0.05);
+  --border-row: rgba(20, 30, 25, 0.1);
+  --border-default: rgba(20, 30, 25, 0.2);
+  --border-card-accent: rgba(94, 156, 126, 0.18);
+
+  /* 阴影(design.md §2 硬规则) */
+  --shadow-card: 0 1px 2px rgba(35, 48, 42, 0.05);
+  --shadow-float: 0 4px 18px rgba(35, 48, 42, 0.09);
+
   --radius-card: 20px;
+  --radius-card-emph: 24px;
+  --radius-control: 9px;
   --font-numeric: 'DM Sans', sans-serif;
   --font-text: 'Noto Sans SC', sans-serif;
 }
