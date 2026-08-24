@@ -81,6 +81,7 @@ function installFetchMock() {
       if (path === '/chat/messages/today' && method === 'GET') return json(api.todayMessages)
       if (path === '/meal-entries/today' && method === 'GET') return json(api.todayEntries)
       if (path === '/chat/messages/open-batch' && method === 'GET') return json(api.openBatch)
+      if (path === '/today' && method === 'GET') return json({ date: '2026-08-24' })
       if (path === '/chat/messages' && method === 'POST') {
         api.chatCalls.push(body)
         return json(api.chatQueue.shift())

@@ -20,6 +20,14 @@
   --color-hover-soft: #e6ece3;
   --color-empty-row: #f3f6f1;
 
+  /* 数据系列色 5 色(design.md §2)。产品级固定语义色,和"身体维度趋势色"那套
+     不混用(design.md 硬规则) */
+  --color-series-intake: #e88472;
+  --color-series-carb: #6ab4b4;
+  --color-series-protein: #a3cc7e;
+  --color-series-fat: #ffba80;
+  --color-series-fiber: #b49ad4;
+
   /* 数据可信度徽标(design.md §2) */
   --color-badge-text: #7c8a82;
   --color-badge-bg: #eff3ed;

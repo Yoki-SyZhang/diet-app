@@ -12,6 +12,26 @@ const baseProps = {
 }
 
 describe('UnconfirmedGuardDialog', () => {
+  it('portals the backdrop to the phone screen so the bottom tabbar stays outside it', () => {
+    const screenRoot = document.createElement('div')
+    screenRoot.className = 'device__screen'
+    const tabbar = document.createElement('div')
+    tabbar.className = 'tabbar'
+    screenRoot.append(tabbar)
+    document.body.append(screenRoot)
+
+    const view = render(
+      <UnconfirmedGuardDialog open {...baseProps} onConfirm={vi.fn()} onCancel={vi.fn()} />,
+    )
+
+    const backdrop = screenRoot.querySelector('.dialog-backdrop')!
+    expect(backdrop.parentElement).toBe(screenRoot)
+    expect(backdrop.querySelector('.tabbar')).not.toBeInTheDocument()
+
+    view.unmount()
+    screenRoot.remove()
+  })
+
   it('renders nothing when closed', () => {
     render(
       <UnconfirmedGuardDialog

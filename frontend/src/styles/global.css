@@ -129,6 +129,8 @@ button:disabled {
 /* 屏幕 = 应用的全部可视范围:滚动、底部输入条、弹窗都被裁在这里面。
    桌面窗口不够高时压缩高度而不是缩放,免得字发虚。 */
 .device__screen {
+  /* 底部导航条高度(不含安全区)。导航、输入条和弹窗遮罩共用这一份。 */
+  --tabbar-h: 58px;
   --screen-bottom-inset: 20px;
   /* 屏幕高度单独抽成变量:卡片展开时要按"屏幕"限高,不是按浏览器窗口 */
   --screen-h: min(844px, calc(100dvh - 70px));
@@ -221,8 +223,6 @@ button:disabled {
 /* ---- 应用外壳(顶栏 + 内容区) ---- */
 
 .app-shell {
-  /* 底部导航条高度(不含安全区)。输入条要钉在它上面,两处引用同一个值。 */
-  --tabbar-h: 58px;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -354,14 +354,45 @@ button:disabled {
   padding: 0 16px;
 }
 
+/* 卡片底边探进聊天区多深(px)。TodayEntryList 量好 → RecordTab 写到 __scroll 上。
+   注册成 <length> 才能被 transition 插值:不注册的自定义属性只会瞬间跳值,
+   渐隐带就会在卡片还没滑下来时先就位。不认 @property 的浏览器降级成"不动画",
+   蒙版本身照常生效。 */
+@property --chat-fade-top {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
 .record-tab__scroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 0 16px 92px;
-  /* 上边缘的渐隐不放这里:它得跟着卡片底边走(展开时卡片会压下来),
-     见 .today-card-float::after */
+
+  /* 对话上边缘的渐隐。用 mask(改内容自己的不透明度)而不是盖一层背景色渐变:
+     色块只有在底下正好是纯背景色时才像淡出,压到用户气泡上就是"洗白一块",
+     边界比硬切还显眼。蒙版贴在滚动容器的视口上、不随内容滚,所以渐隐带永远
+     钉在对话区顶部;起点从 0(折叠,正好贴着卡片底边)推到 --chat-fade-top
+     (展开,跟着卡片底边一起下移)。 */
+  --chat-fade-len: 26px;
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    transparent var(--chat-fade-top, 0px),
+    #000 calc(var(--chat-fade-top, 0px) + var(--chat-fade-len)),
+    #000 100%
+  );
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    transparent var(--chat-fade-top, 0px),
+    #000 calc(var(--chat-fade-top, 0px) + var(--chat-fade-len)),
+    #000 100%
+  );
+  /* 时长/曲线跟 .entry-group__rows 一致,渐隐带和明细行同步走 */
+  transition: --chat-fade-top 260ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 屏幕里的滚动条一律不画:手机上触摸滚、桌面上滚轮滚,滚动条只是噪声,
@@ -376,11 +407,13 @@ button:disabled {
   display: none;
 }
 
+/* 上边距要大于 --chat-fade-len:折叠 + 滚到顶时,这行标题得完整落在渐隐带下方,
+   否则一进页面标题就是灰的 */
 .section-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin: 22px 0 8px;
+  margin: 28px 0 8px;
 }
 
 .section-head h2 {
@@ -405,23 +438,6 @@ button:disabled {
   max-height: var(--card-collapsed-h, none);
 }
 
-.today-card-float {
-  position: relative;
-}
-
-/* 卡片下沿的渐隐:聊天从卡片底下淡出,而不是被硬切一刀。挂在卡片这一层
-   (不是滚动区顶部)才能贴着卡片底边走——展开只是把这条边往下推,效果不变。 */
-.today-card-float::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 100%;
-  height: 16px;
-  background: linear-gradient(180deg, var(--color-bg) 0%, rgba(237, 242, 233, 0) 100%);
-  pointer-events: none;
-}
-
 .today-card {
   background: var(--color-card);
   border-radius: var(--radius-card-emph);
@@ -438,9 +454,9 @@ button:disabled {
   background: transparent;
   text-align: left;
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  padding: 14px 16px 4px;
+  align-items: stretch;
+  gap: 10px;
+  padding: 12px 16px 8px;
 }
 
 /* 没有记录时不可展开,但不要被全局的 :disabled 半透明规则压暗 */
@@ -449,20 +465,17 @@ button:disabled {
   cursor: default;
 }
 
-.intake-caret {
-  align-self: center;
-  margin-left: 8px;
-  width: 0;
-  height: 0;
-  border-left: 5px solid currentColor;
-  border-top: 3.5px solid transparent;
-  border-bottom: 3.5px solid transparent;
-  color: var(--color-text-faint);
-  transition: transform 200ms ease;
+/* 左列:kcal 合计 + 营养素加总。min-width:0 是必需的——没有它 flex 子项以内容
+   最小宽度为底线,营养素那行会把右列挤出卡片。 */
+.intake-main {
+  flex: 1;
+  min-width: 0;
 }
 
-.intake-caret.is-open {
-  transform: rotate(90deg);
+.intake-kcal {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
 }
 
 .intake-header .intake-value {
@@ -477,10 +490,81 @@ button:disabled {
   color: var(--color-text-secondary);
 }
 
-.intake-header .intake-delta {
-  margin-left: auto;
-  font-size: 11px;
+/* 四项一行放不下也不换行:390 宽下靠字号和 gap 挤得进去,换行会把卡片顶高一截 */
+.intake-macros {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  margin-top: 5px;
+  font-size: 9.5px;
   color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.intake-macro b {
+  font-family: var(--font-numeric);
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.intake-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 1.5px;
+  margin-right: 3px;
+}
+
+.intake-dot--carb {
+  background: var(--color-series-carb);
+}
+
+.intake-dot--protein {
+  background: var(--color-series-protein);
+}
+
+.intake-dot--fat {
+  background: var(--color-series-fat);
+}
+
+.intake-dot--fiber {
+  background: var(--color-series-fiber);
+}
+
+/* 右列:归属日 + 今日 Δ,靠一条竖线和左边分开(设计稿) */
+.intake-side {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 3px;
+  padding-left: 12px;
+  border-left: 1px solid var(--border-row);
+  white-space: nowrap;
+}
+
+.intake-date {
+  font-family: var(--font-numeric);
+  font-size: 10px;
+  color: var(--color-text-secondary);
+}
+
+.intake-header .intake-delta {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--color-text-secondary);
+}
+
+/* Δ 现在恒为占位"—"(真值要等 1.12),用弱色:17px 加粗的绿破折号看着像一条绿杠。
+   1.12 接上真值时这里要按正负分色(缺口/超标不是一个意思),不是固定主色。 */
+.intake-header .intake-delta b {
+  font-family: var(--font-numeric);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text-faint);
 }
 
 .entry-table {
@@ -591,9 +675,9 @@ button:disabled {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .record-tab__scroll,
   .entry-group__rows,
   .entry-group__rows-inner,
-  .intake-caret,
   .group-head .group-caret {
     transition: none;
   }
@@ -957,10 +1041,11 @@ button:disabled {
 
 /* ---- 通用二次确认对话框(design.md §7 Gap:视觉先行,后续统一) ---- */
 
-/* 同 .input-bar:遮罩铺满"屏幕"而不是浏览器窗口 */
+/* Portal 直接挂在 .device__screen。遮罩铺满手机屏幕,但底边停在 Tab 导航上沿:
+   状态栏/页面/输入条都在遮罩内,底部 Tab 保持露出且不被拦截。 */
 .dialog-backdrop {
   position: absolute;
-  inset: 0;
+  inset: 0 0 calc(var(--tabbar-h, 58px) + var(--screen-bottom-inset, 0px));
   background: rgba(20, 30, 25, 0.35);
   display: flex;
   align-items: center;
