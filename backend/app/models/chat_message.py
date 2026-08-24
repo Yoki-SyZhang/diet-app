@@ -5,7 +5,7 @@ from app.models.base import Base
 
 
 class ChatMessage(Base):
-    """对话历史(SPEC §6.4)。与短期库同生命周期,保留最近 7 个归属日。"""
+    """对话历史(SPEC §6.4)。保留最近 1 个归属日。"""
 
     __tablename__ = "chat_message"
 
