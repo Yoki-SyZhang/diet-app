@@ -1,6 +1,7 @@
-// 对话气泡列表(1.9)。chat_message 是给人看的展示层;assistant 左对齐白底,
-// user 右对齐浅绿底(对照原型)。渲染为 fragment,由 RecordTab 的 chat-list
-// 容器统一排版(解析卡片要紧跟在最后一条 assistant 气泡后"长出来")。
+// 对话消息列表(1.9)。chat_message 是给人看的展示层;user 右对齐浅绿气泡,
+// assistant 不加气泡、左侧平铺直出(读长回复时框线只是噪声)。渲染为 fragment,
+// 由 RecordTab 的 chat-list 容器统一排版(解析卡片紧跟最后一条 assistant 文本)。
+// 类名保留 .bubble.assistant/.bubble.user:冒烟驱动和测试按它选元素,别改名。
 
 import type { ChatMessageOut } from '@/types/diet'
 

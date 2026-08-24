@@ -47,19 +47,54 @@ describe('TodayEntryList', () => {
     expect(breakfastHead).toBeDisabled()
   })
 
-  it('collapses and re-expands a non-empty group', async () => {
+  it('默认全收起;点某餐小计行只展开那一餐', async () => {
     render(
-      <TodayEntryList entries={[entry({ food_name: '午饭肉' })]} disabled={false} onDelete={vi.fn()} />,
+      <TodayEntryList
+        entries={[entry({ meal_slot: 'lunch' }), entry({ meal_slot: 'dinner' })]}
+        disabled={false}
+        onDelete={vi.fn()}
+      />,
     )
 
     const lunchHead = screen.getByText('午餐').closest('button')!
+    const dinnerHead = screen.getByText('晚餐').closest('button')!
+    // 行常驻 DOM(收放靠 CSS,才能做动画),所以展开态看 aria-expanded/data-open
+    const rowsOf = (head: HTMLElement) =>
+      head.parentElement!.querySelector('.entry-group__rows')!
+
+    expect(lunchHead).toHaveAttribute('aria-expanded', 'false')
+    expect(rowsOf(lunchHead)).toHaveAttribute('data-open', 'false')
+
+    await userEvent.click(lunchHead)
     expect(lunchHead).toHaveAttribute('aria-expanded', 'true')
+    expect(rowsOf(lunchHead)).toHaveAttribute('data-open', 'true')
+    expect(dinnerHead).toHaveAttribute('aria-expanded', 'false') // 只开这一餐
 
     await userEvent.click(lunchHead)
-    expect(screen.queryByText('午饭肉')).not.toBeInTheDocument()
+    expect(lunchHead).toHaveAttribute('aria-expanded', 'false')
+  })
 
-    await userEvent.click(lunchHead)
-    expect(screen.getByText('午饭肉')).toBeInTheDocument()
+  it('点顶部摄入区一键展开全部/一键收起;空明细时不可点', async () => {
+    const { unmount } = render(
+      <TodayEntryList
+        entries={[entry({ meal_slot: 'lunch' }), entry({ meal_slot: 'dinner' })]}
+        disabled={false}
+        onDelete={vi.fn()}
+      />,
+    )
+
+    const heads = () => ['午餐', '晚餐'].map((l) => screen.getByText(l).closest('button')!)
+    expect(heads().map((h) => h.getAttribute('aria-expanded'))).toEqual(['false', 'false'])
+
+    await userEvent.click(screen.getByRole('button', { name: '展开全部明细' }))
+    expect(heads().map((h) => h.getAttribute('aria-expanded'))).toEqual(['true', 'true'])
+
+    await userEvent.click(screen.getByRole('button', { name: '收起全部明细' }))
+    expect(heads().map((h) => h.getAttribute('aria-expanded'))).toEqual(['false', 'false'])
+
+    unmount()
+    render(<TodayEntryList entries={[]} disabled={false} onDelete={vi.fn()} />)
+    expect(screen.getByRole('button', { name: '展开全部明细' })).toBeDisabled()
   })
 
   it('intake total sums kcal; group subtotal shows — when all values missing', () => {
