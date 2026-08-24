@@ -84,6 +84,7 @@ Set-Location frontend; npm test; Set-Location ..                        # 前端
 - **停服务必须按端口杀**——TaskStop/杀 npm 包装进程杀不掉 vite 子进程,孤儿 node 占着 5173,下次启动 strictPort 直接 `EADDRINUSE` 退出。上面的 `Get-NetTCPConnection` 一条清两个端口。
 - **LLM 延迟**:解析+逐项估算一步可达几十秒,driver 里等待统一 90s;自己写断言别用短超时。
 - **打开页面后先等 ~2.5s** 再数气泡:挂载时拉历史消息是异步的,立刻计数基线是 0,后续断言全错位(driver 的 `open_app` 已内置)。
+- **今日明细默认全收起**(只剩每餐小计),收起时明细行高度为 0,删除按钮点不到——但 `is_visible()` 仍返回 True(行被父容器裁掉,自身 box 还在),别拿它判断。要操作明细行先调 driver 的 `expand_today(page)`,它点顶部摄入区一键展开。
 - **后端 uvicorn 没开 --reload**:改了 backend 代码/prompt 要手动重启;前端 vite HMR 自动生效。
 - **PowerShell 5.1 内嵌中文 JSON 会被编码搞坏**(curl 一行流报 "error parsing the body"):要手动调接口时把 body 写进 UTF-8 文件再 `curl --data-binary @file`,或直接写 python 脚本。
 - **迁移安全模式**:所有迁移对非空 `meal_entry`/`chat_message` 一律 raise 拒绝,升级副本失败先查表里是不是有上次没清的数据。

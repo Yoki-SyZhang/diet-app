@@ -67,6 +67,20 @@ def open_app(page) -> None:
     page.wait_for_timeout(2500)
 
 
+def expand_today(page) -> None:
+    """展开今日明细(点顶部摄入区 = 一键全展开)。
+
+    明细默认全收起、只剩每餐小计,收起时明细行高度为 0——Playwright 命中测试
+    落不到删除按钮上(注意 is_visible() 仍是 True,骗人)。凡是要操作明细行,
+    先调这个。已经展开时按钮名变成"收起全部明细",这里会跳过。
+    """
+    toggle = page.get_by_role("button", name="展开全部明细")
+    # 今天没有任何记录时这个按钮是 disabled 的,直接 click 会干等 30s 超时
+    if toggle.count() > 0 and toggle.is_enabled():
+        toggle.click()
+        page.wait_for_timeout(400)  # 等展开动画走完
+
+
 def scenario_smoke(page) -> None:
     """最小代表性交互:页面渲染 + 一次真实对话往返。"""
     open_app(page)
@@ -100,6 +114,7 @@ def scenario_happy(page) -> None:
     expect(card(page).get_by_text("已写入")).to_be_visible(timeout=LLM_TIMEOUT)
     today = page.get_by_role("region", name="今日明细")
     del_buttons = today.locator('button[aria-label^="删除"]')
+    expand_today(page)
     expect(del_buttons.first).to_be_visible(timeout=10_000)
     assert del_buttons.first.is_disabled(), "卡片未结束时删除按钮应禁用"
     expect(card(page).get_by_text("重新估算中…")).to_have_count(0, timeout=LLM_TIMEOUT)
@@ -114,6 +129,7 @@ def scenario_happy(page) -> None:
         n_before_final + 1, timeout=LLM_TIMEOUT
     )
     shot(page, "happy_04_recap")
+    expand_today(page)
     assert del_buttons.first.is_enabled(), "卡片结束后删除按钮应恢复可用"
     print("[ok] happy path")
 
@@ -151,6 +167,7 @@ def scenario_clarify_chitchat(page) -> None:
 
 def scenario_delete_row(page) -> None:
     open_app(page)
+    expand_today(page)
     today = page.get_by_role("region", name="今日明细")
     del_buttons = today.locator('button[aria-label^="删除"]')
     before = del_buttons.count()
