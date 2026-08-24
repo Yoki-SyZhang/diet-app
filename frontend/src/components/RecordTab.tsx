@@ -28,6 +28,7 @@ import {
   sendRecap,
 } from '@/lib/chat'
 import { confirmMealEntry, deleteMealEntry, fetchTodayEntries } from '@/lib/mealEntries'
+import { fetchToday } from '@/lib/today'
 import { ChatHistory } from '@/components/ChatHistory'
 import { ChatInputBar } from '@/components/ChatInputBar'
 import { ConfirmationCard } from '@/components/ConfirmationCard'
@@ -79,6 +80,9 @@ export function RecordTab() {
   const [messages, setMessages] = useState<ChatMessageOut[]>([])
   const [optimistic, setOptimistic] = useState<OptimisticSend[]>([])
   const [entries, setEntries] = useState<MealEntryOut[]>([])
+  // 当前归属日,来自后端。拿不到就保持 null,卡片上那行日期不渲染——宁可不显示,
+  // 也不显示一个前端自己算的日期(归属日规则只有后端一份,SPEC §6.1)。
+  const [todayDate, setTodayDate] = useState<string | null>(null)
   const [pendingItems, setPendingItems] = useState<PendingItem[]>([])
   const [batchId, setBatchId] = useState<string | null>(null)
   const [modifyingItemId, setModifyingItemId] = useState<string | null>(null)
@@ -118,6 +122,9 @@ export function RecordTab() {
     fetchTodayEntries()
       .then((data) => !cancelled && setEntries(data))
       .catch(() => {})
+    fetchToday()
+      .then((data) => !cancelled && setTodayDate(data.date))
+      .catch(() => {})
     fetchOpenBatch()
       .then((batch) => {
         if (batch && batch.items.length > 0 && !cancelled) {
@@ -129,6 +136,13 @@ export function RecordTab() {
       cancelled = true
     }
   }, [applyIncoming])
+
+  /** 明细卡片盖到聊天上多深 → 对话上边缘那道渐隐的起点。直接写 DOM 变量而不是走
+   *  state:这个值在展开/收起时每次渲染都要更新,进 state 就是白白多一轮重渲染。
+   *  渐隐带自己在 CSS 里有 260ms 过渡,跟卡片展开同步滑,不需要逐帧喂值。 */
+  const handleOverlapChange = useCallback((px: number) => {
+    scrollRef.current?.style.setProperty('--chat-fade-top', `${px}px`)
+  }, [])
 
   // 新消息/新卡片出现后把对话滚到底。屏幕高度固定(手机外框),不主动滚就会出现
   // "AI 已经答了但看不见"。用 scrollTop 赋值而不是 scrollTo:jsdom 里也能跑。
@@ -405,6 +419,8 @@ export function RecordTab() {
           disabled={hasOpenCard}
           onDelete={handleDelete}
           deleteError={deleteError}
+          date={todayDate}
+          onOverlapChange={handleOverlapChange}
         />
       </div>
       <div className="record-tab__scroll" ref={scrollRef}>

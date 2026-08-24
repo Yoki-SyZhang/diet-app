@@ -1,5 +1,10 @@
 // 1.9 今日明细:四个固定餐次分组/小计/合计、null 营养素显示"—"不是 0、空态、
 // 展开收起、删除二次确认、存在未结束卡片时删除禁用。
+//
+// 不测的:--card-collapsed-h / onOverlapChange 这两个量测值。jsdom 不做布局,
+// offsetHeight/scrollHeight 恒为 0,断言只能断出"0px 被写进了 style",既证明不了
+// 覆盖式展开没挤动聊天,也证明不了渐隐带贴着卡片底边——这两条只能在真实浏览器里
+// 量(见 .claude/skills/run-dietapp/)。
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
@@ -26,6 +31,61 @@ function entry(overrides: Partial<MealEntryOut> = {}): MealEntryOut {
     ...overrides,
   }
 }
+
+describe('TodayEntryList 顶部摄入区', () => {
+  it('显示四大营养素加总,带单位 g', () => {
+    render(
+      <TodayEntryList
+        entries={[
+          entry({ carb_g: 20.4, protein_g: 30, fat_g: 5, fiber_g: 2 }),
+          entry({ carb_g: 10.1, protein_g: 12, fat_g: 3, fiber_g: 1 }),
+        ]}
+        disabled={false}
+        onDelete={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('31g')).toBeInTheDocument() // 碳水 20.4+10.1 四舍五入
+    expect(screen.getByText('42g')).toBeInTheDocument() // 蛋白
+    expect(screen.getByText('8g')).toBeInTheDocument() // 脂肪
+    expect(screen.getByText('3g')).toBeInTheDocument() // 纤维
+    for (const label of ['碳水', '蛋白', '脂肪', '纤维']) {
+      expect(screen.getByText(label, { exact: false })).toBeInTheDocument()
+    }
+  })
+
+  it('区分"未提供"和"确定为零":null 显示 —,真实的 0 显示 0g', () => {
+    const { container } = render(
+      <TodayEntryList
+        entries={[
+          entry({ carb_g: 0, fiber_g: null }),
+          entry({ carb_g: 0, fiber_g: null }),
+        ]}
+        disabled={false}
+        onDelete={vi.fn()}
+      />,
+    )
+    const macroValue = (label: string) =>
+      [...container.querySelectorAll('.intake-macro')]
+        .find((el) => el.textContent?.startsWith(label))!
+        .querySelector('b')!.textContent
+
+    // 铁律:null 是"未提供"→ "—"(且不能是 "—g");0 是"确定为零"→ 照常显示 0g
+    expect(macroValue('纤维')).toBe('—')
+    expect(macroValue('碳水')).toBe('0g')
+  })
+
+  it('归属日渲染成 "8月15日 周六";没拿到日期时整行不渲染', () => {
+    const { unmount } = render(
+      <TodayEntryList entries={[entry()]} disabled={false} onDelete={vi.fn()} date="2026-08-15" />,
+    )
+    expect(screen.getByText('8月15日 周六')).toBeInTheDocument()
+    unmount()
+
+    render(<TodayEntryList entries={[entry()]} disabled={false} onDelete={vi.fn()} />)
+    expect(screen.queryByText(/月.*日/)).not.toBeInTheDocument()
+  })
+})
 
 describe('TodayEntryList', () => {
   it('groups entries into four fixed slots; empty slots show 未记录 and are not expandable', () => {
@@ -84,6 +144,7 @@ describe('TodayEntryList', () => {
     )
 
     const heads = () => ['午餐', '晚餐'].map((l) => screen.getByText(l).closest('button')!)
+    expect(document.querySelector('.intake-caret')).not.toBeInTheDocument()
     expect(heads().map((h) => h.getAttribute('aria-expanded'))).toEqual(['false', 'false'])
 
     await userEvent.click(screen.getByRole('button', { name: '展开全部明细' }))
