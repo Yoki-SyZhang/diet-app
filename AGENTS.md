@@ -37,6 +37,8 @@
   `test_demo_NN_关键词`(后端)/`demo_NN_关键词.test.tsx`(前端)命名,`NN` 是所属 PR
   编号,具体规则见 `tasks/STATUS.md` 表格上方说明。
 - `tasks/` — `STATUS.md` 全局进度板, 边做边勾, 粗粒度、慢变、跨所有步；`current.md `当前这一步的活计划, plan mode 产出, 做完被下一步覆盖, 细粒度, 每次提交进 git
+- `tasks/flow_charts/` — 业务流程 ↔ 代码映射,长期维护、不随 current.md 被覆盖；
+  用途和维护规则见 `tasks/flow_charts/README.md`。
 - `docs/product/` — `PRD.md` 产品需求、`SPEC.md` 技术契约(业务定义唯一真源)；(会变,git 管版本)
 - `docs/design/` — `design.md` 前端设计规范、`ui-bundle/` 设计稿静态文件
 - `docs/decisions/` — 关键决策记录("为什么这么定")
