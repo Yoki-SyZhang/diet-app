@@ -11,6 +11,11 @@ class MealEntry(Base):
     __tablename__ = "meal_entry"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    # 幂等键:识别出这一项食物那一刻由后端生成一次,贯穿其整个生命周期(包括修改后),
+    # 唯一索引是网络重试防重复插入的数据库层最后防线(1.9,tasks/current.md)
+    confirmation_id: Mapped[str] = mapped_column(
+        Text, nullable=False, unique=True, index=True
+    )
     date: Mapped[str] = mapped_column(Text, nullable=False, index=True)
     meal_slot: Mapped[str] = mapped_column(
         Enum(
