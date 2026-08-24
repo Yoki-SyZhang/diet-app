@@ -1,4 +1,5 @@
-"""1.8 自然语言解析的真实评测(tasks/current.md)。不是 pytest 用例,手动运行:
+"""1.8 自然语言解析的真实评测(tasks/current.md;1.9 起扩展 intent×outcome 两维)。
+不是 pytest 用例,手动运行:
 
     conda activate vibe-coding
     cd backend
@@ -10,8 +11,11 @@
 
 - 首次结构合法率:第一次模型响应就满足 nl_parse 契约的比例;
 - 最终结构合法率(自动重试后):对应 SPEC §11.1"文本解析合法结构率 ≥95%"这条门槛;
-- 语义准确率:resolved/needs_clarification 判断是否匹配数据集标注的 expected_outcome
-  (质量参考,SPEC 没有单独定数字门槛)。
+- intent 准确率:模型判断的 intent 是否匹配数据集标注的 expected_intent(质量参考);
+- outcome 准确率:在数据集标注了 expected_outcome 的行上(intent 是
+  new_entry/correct_pending_item 的行才有 outcome),最终 outcome 是否匹配标注——
+  模型把这类行误判成 no_log_intent/edit_existing_entry 时 outcome 为空,同样计为
+  outcome 维度不匹配(质量参考,SPEC 没有单独定数字门槛)。
 
 `service_unavailable`(网络/超时/限流,infra 抖动不是模型质量问题)单独计数,不进上述
 比率的分母。失败/不合格样本连同原始响应存到
@@ -28,6 +32,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import httpx
+from app.schemas.diet_parse import Intent
 from app.schemas.llm_outcome import LlmOutcome
 from app.services import nl_parse
 from app.services.llm_client import LlmClient, LlmJsonResult, create_dashscope_client
@@ -39,6 +44,8 @@ RESULTS_DIR = REPO_ROOT / "tests" / "backend" / "eval" / "results"
 _RESOLVED = LlmOutcome.RESOLVED.value
 _NEEDS_CLARIFICATION = LlmOutcome.NEEDS_CLARIFICATION.value
 _INVALID_MODEL_OUTPUT = LlmOutcome.INVALID_MODEL_OUTPUT.value
+_NO_LOG_INTENT = Intent.NO_LOG_INTENT.value
+_EDIT_EXISTING_ENTRY = Intent.EDIT_EXISTING_ENTRY.value
 
 
 @dataclass
@@ -46,8 +53,10 @@ class RowRecord:
     id: str
     category: str
     input_text: str
-    expected_outcome: str
+    expected_intent: str
+    expected_outcome: str  # intent 无 outcome 语义的行(no_log/edit)标注为空串
     attempts: list[str] = field(default_factory=list)  # "legal" | "illegal" | "network_failure"
+    final_intent: str | None = None
     final_outcome: str | None = None
     final_message: str | None = None
     error: str | None = None
@@ -92,12 +101,14 @@ async def _run_one(client: LlmClient, row: dict) -> RowRecord:
         id=row["id"],
         category=row["category"],
         input_text=row["input_text"],
+        expected_intent=row["expected_intent"],
         expected_outcome=row["expected_outcome"],
     )
     recording_client = _RecordingClient(client, record)
     try:
         result = await nl_parse.parse_diet_text(recording_client, row["input_text"])
-        record.final_outcome = result.outcome.value
+        record.final_intent = result.intent.value
+        record.final_outcome = result.outcome.value if result.outcome is not None else None
         record.final_message = result.message
     except Exception as exc:  # 评测脚本要能跑完整批,单条崩溃不能中断整体
         record.error = f"{type(exc).__name__}: {exc}"
@@ -109,20 +120,28 @@ def _load_dataset() -> list[dict]:
         return list(csv.DictReader(f))
 
 
+def _is_final_legal(record: RowRecord) -> bool:
+    """最终结果是否满足两维契约的合法形状(不管语义判断对不对)。"""
+    if record.final_outcome in (_RESOLVED, _NEEDS_CLARIFICATION):
+        return True
+    return record.final_outcome is None and record.final_intent in (
+        _NO_LOG_INTENT,
+        _EDIT_EXISTING_ENTRY,
+    )
+
+
 def _summarize(records: list[RowRecord]) -> dict:
     service_unavailable = [r for r in records if _is_service_unavailable(r)]
     scoreable = [r for r in records if not _is_service_unavailable(r)]
     n = len(scoreable)
 
     first_legal = sum(1 for r in scoreable if r.attempts and r.attempts[0] == "legal")
-    final_legal = sum(
-        1 for r in scoreable if r.final_outcome in (_RESOLVED, _NEEDS_CLARIFICATION)
-    )
-    semantic_scoreable = [
-        r for r in scoreable if r.final_outcome in (_RESOLVED, _NEEDS_CLARIFICATION)
-    ]
-    semantic_correct = sum(
-        1 for r in semantic_scoreable if r.final_outcome == r.expected_outcome
+    legal_rows = [r for r in scoreable if _is_final_legal(r)]
+
+    intent_correct = sum(1 for r in legal_rows if r.final_intent == r.expected_intent)
+    outcome_scoreable = [r for r in legal_rows if r.expected_outcome]
+    outcome_correct = sum(
+        1 for r in outcome_scoreable if r.final_outcome == r.expected_outcome
     )
 
     return {
@@ -130,10 +149,12 @@ def _summarize(records: list[RowRecord]) -> dict:
         "service_unavailable_count": len(service_unavailable),
         "scoreable_rows": n,
         "first_attempt_legal_rate": (first_legal / n) if n else None,
-        "final_legal_rate": (final_legal / n) if n else None,
-        "semantic_scoreable_rows": len(semantic_scoreable),
-        "semantic_accuracy": (
-            (semantic_correct / len(semantic_scoreable)) if semantic_scoreable else None
+        "final_legal_rate": (len(legal_rows) / n) if n else None,
+        "intent_scoreable_rows": len(legal_rows),
+        "intent_accuracy": (intent_correct / len(legal_rows)) if legal_rows else None,
+        "outcome_scoreable_rows": len(outcome_scoreable),
+        "outcome_accuracy": (
+            (outcome_correct / len(outcome_scoreable)) if outcome_scoreable else None
         ),
     }
 
@@ -156,19 +177,21 @@ async def main() -> None:
     print(f"首次结构合法率: {_fmt_pct(summary['first_attempt_legal_rate'])}")
     print(f"最终结构合法率(对应 SPEC §11.1 95% 门槛): {_fmt_pct(summary['final_legal_rate'])}")
     print(
-        f"语义准确率(参考,非硬性门槛,基于 {summary['semantic_scoreable_rows']} 条): "
-        f"{_fmt_pct(summary['semantic_accuracy'])}"
+        f"intent 准确率(参考,非硬性门槛,基于 {summary['intent_scoreable_rows']} 条): "
+        f"{_fmt_pct(summary['intent_accuracy'])}"
+    )
+    print(
+        f"outcome 准确率(参考,非硬性门槛,基于 {summary['outcome_scoreable_rows']} 条): "
+        f"{_fmt_pct(summary['outcome_accuracy'])}"
     )
 
     failures = [
         r
         for r in records
         if _is_service_unavailable(r)
-        or r.final_outcome == _INVALID_MODEL_OUTPUT
-        or (
-            r.final_outcome in (_RESOLVED, _NEEDS_CLARIFICATION)
-            and r.final_outcome != r.expected_outcome
-        )
+        or not _is_final_legal(r)
+        or r.final_intent != r.expected_intent
+        or (bool(r.expected_outcome) and r.final_outcome != r.expected_outcome)
     ]
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -183,7 +206,9 @@ async def main() -> None:
                         "id": r.id,
                         "category": r.category,
                         "input_text": r.input_text,
+                        "expected_intent": r.expected_intent,
                         "expected_outcome": r.expected_outcome,
+                        "final_intent": r.final_intent,
                         "final_outcome": r.final_outcome,
                         "final_message": r.final_message,
                         "attempts": r.attempts,

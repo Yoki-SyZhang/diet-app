@@ -1,10 +1,11 @@
-"""1.8 自然语言解析:四态结果在代码层的正确性——不测 LLM 语义判断质量(裸词该不该
-追问生熟、菜名判断准不准),那部分由 `backend/scripts/eval_nl_parse.py` 的真实评测集
-覆盖(tasks/current.md)。这里全部用 stub `LlmClient`,不打真实网络。
+"""1.8 自然语言解析:intent×outcome 两维结果在代码层的正确性——不测 LLM 语义判断质量
+(裸词该不该追问生熟、菜名判断准不准),那部分由 `backend/scripts/eval_nl_parse.py` 的
+真实评测集覆盖(tasks/current.md)。这里全部用 stub `LlmClient`,不打真实网络。
 """
 
 import pytest
 
+from app.schemas.diet_parse import Intent
 from app.schemas.llm_outcome import LlmOutcome
 from app.services.llm_client import LlmJsonResult
 from app.services.nl_parse import _SYSTEM_PROMPT, parse_diet_text
@@ -22,6 +23,7 @@ class StubLlmClient:
 
 def _resolved_payload(**overrides):
     payload = {
+        "intent": "new_entry",
         "status": "resolved",
         "meal_slot": "lunch",
         "items": [
@@ -42,6 +44,7 @@ async def test_resolved_full_info():
     client = StubLlmClient([LlmJsonResult(ok=True, parsed=_resolved_payload())])
     result = await parse_diet_text(client, "我吃了150g熟鸡胸肉")
 
+    assert result.intent == Intent.NEW_ENTRY
     assert result.outcome == LlmOutcome.RESOLVED
     assert result.meal_slot == "lunch"
     assert result.message is None
@@ -106,10 +109,15 @@ async def test_resolved_ready_to_consume_items_do_not_need_prep_state_question()
 
 @pytest.mark.asyncio
 async def test_needs_clarification_missing_quantity():
-    payload = {"status": "needs_clarification", "message": "大概吃了多少克鸡胸肉呢?"}
+    payload = {
+        "intent": "new_entry",
+        "status": "needs_clarification",
+        "message": "大概吃了多少克鸡胸肉呢?",
+    }
     client = StubLlmClient([LlmJsonResult(ok=True, parsed=payload)])
     result = await parse_diet_text(client, "我吃了鸡胸肉")
 
+    assert result.intent == Intent.NEW_ENTRY
     assert result.outcome == LlmOutcome.NEEDS_CLARIFICATION
     assert result.items == []
     assert result.message == "大概吃了多少克鸡胸肉呢?"
@@ -117,7 +125,11 @@ async def test_needs_clarification_missing_quantity():
 
 @pytest.mark.asyncio
 async def test_needs_clarification_bare_ingredient_missing_prep_state():
-    payload = {"status": "needs_clarification", "message": "鸡胸肉是生的还是熟的呢?"}
+    payload = {
+        "intent": "new_entry",
+        "status": "needs_clarification",
+        "message": "鸡胸肉是生的还是熟的呢?",
+    }
     client = StubLlmClient([LlmJsonResult(ok=True, parsed=payload)])
     result = await parse_diet_text(client, "我吃了150g鸡胸肉")
 
@@ -126,12 +138,78 @@ async def test_needs_clarification_bare_ingredient_missing_prep_state():
 
 
 @pytest.mark.asyncio
-async def test_needs_clarification_unrelated_input():
-    payload = {"status": "needs_clarification", "message": "目前只能记录饮食,请描述你吃了什么"}
+async def test_no_log_intent_chitchat_returns_message_without_outcome():
+    # 闲聊/问常识:intent=no_log_intent,outcome 为 None,message 直接是回应文案
+    payload = {"intent": "no_log_intent", "message": "我主要帮你记录饮食,今天吃了什么呀?"}
     client = StubLlmClient([LlmJsonResult(ok=True, parsed=payload)])
     result = await parse_diet_text(client, "今天天气怎么样")
 
-    assert result.outcome == LlmOutcome.NEEDS_CLARIFICATION
+    assert result.intent == Intent.NO_LOG_INTENT
+    assert result.outcome is None
+    assert result.items == []
+    assert result.message == "我主要帮你记录饮食,今天吃了什么呀?"
+
+
+@pytest.mark.asyncio
+async def test_edit_existing_entry_returns_message_without_outcome():
+    # 想改已写库的记录:intent=edit_existing_entry,当前不支持,message 是得体的说明
+    payload = {"intent": "edit_existing_entry", "message": "目前还不支持修改已经记录的内容"}
+    client = StubLlmClient([LlmJsonResult(ok=True, parsed=payload)])
+    result = await parse_diet_text(client, "帮我把昨天记的鸡胸肉删掉")
+
+    assert result.intent == Intent.EDIT_EXISTING_ENTRY
+    assert result.outcome is None
+    assert result.items == []
+    assert result.message == "目前还不支持修改已经记录的内容"
+
+
+@pytest.mark.asyncio
+async def test_correct_pending_item_resolved_carries_items():
+    # 修改重新估算路径:模型自我确认 intent=correct_pending_item,outcome 语义同 new_entry
+    payload = _resolved_payload(intent="correct_pending_item")
+    client = StubLlmClient([LlmJsonResult(ok=True, parsed=payload)])
+    result = await parse_diet_text(client, "原来识别:熟鸡胸肉100g;用户修正:改成150g")
+
+    assert result.intent == Intent.CORRECT_PENDING_ITEM
+    assert result.outcome == LlmOutcome.RESOLVED
+    assert len(result.items) == 1
+
+
+@pytest.mark.asyncio
+async def test_missing_intent_is_contract_violation():
+    # 旧版单维 payload(没有 intent 字段)现在属于契约违规,重试后仍缺 → invalid_model_output
+    payload = _resolved_payload()
+    payload.pop("intent")
+    client = StubLlmClient(
+        [LlmJsonResult(ok=True, parsed=dict(payload)), LlmJsonResult(ok=True, parsed=dict(payload))]
+    )
+    result = await parse_diet_text(client, "我吃了150g熟鸡胸肉")
+
+    assert result.outcome == LlmOutcome.INVALID_MODEL_OUTPUT
+    assert len(client.calls) == 2
+
+
+@pytest.mark.asyncio
+async def test_unknown_intent_value_is_contract_violation():
+    payload = _resolved_payload(intent="delete_everything")
+    client = StubLlmClient(
+        [LlmJsonResult(ok=True, parsed=payload), LlmJsonResult(ok=True, parsed=payload)]
+    )
+    result = await parse_diet_text(client, "我吃了150g熟鸡胸肉")
+
+    assert result.outcome == LlmOutcome.INVALID_MODEL_OUTPUT
+
+
+@pytest.mark.asyncio
+async def test_no_log_intent_missing_message_is_contract_violation():
+    # no_log_intent/edit_existing_entry 的 message 必须非空,缺了就是契约违规
+    payload = {"intent": "no_log_intent"}
+    client = StubLlmClient(
+        [LlmJsonResult(ok=True, parsed=dict(payload)), LlmJsonResult(ok=True, parsed=dict(payload))]
+    )
+    result = await parse_diet_text(client, "早上好")
+
+    assert result.outcome == LlmOutcome.INVALID_MODEL_OUTPUT
 
 
 @pytest.mark.asyncio
@@ -234,7 +312,7 @@ async def test_preparation_state_unknown_is_rejected_as_contract_violation():
 
 @pytest.mark.asyncio
 async def test_unknown_status_value_is_contract_violation():
-    payload = {"status": "who_knows", "message": "?"}
+    payload = {"intent": "new_entry", "status": "who_knows", "message": "?"}
     client = StubLlmClient([LlmJsonResult(ok=True, parsed=payload), LlmJsonResult(ok=True, parsed=payload)])
     result = await parse_diet_text(client, "随便")
 

@@ -1,0 +1,99 @@
+{
+  "summary": {
+    "total_rows": 117,
+    "service_unavailable_count": 0,
+    "scoreable_rows": 117,
+    "first_attempt_legal_rate": 1.0,
+    "final_legal_rate": 1.0,
+    "intent_scoreable_rows": 117,
+    "intent_accuracy": 1.0,
+    "outcome_scoreable_rows": 105,
+    "outcome_accuracy": 0.9428571428571428
+  },
+  "failures": [
+    {
+      "id": "29",
+      "category": "natural_portion_words",
+      "input_text": "我吃了一大份炸鸡",
+      "expected_intent": "new_entry",
+      "expected_outcome": "resolved",
+      "final_intent": "new_entry",
+      "final_outcome": "needs_clarification",
+      "final_message": "请问您吃的是多少克炸鸡呢？或者大概几块？",
+      "attempts": [
+        "legal"
+      ],
+      "error": null
+    },
+    {
+      "id": "52",
+      "category": "missing_quantity",
+      "input_text": "我吃了烤玉米",
+      "expected_intent": "new_entry",
+      "expected_outcome": "needs_clarification",
+      "final_intent": "new_entry",
+      "final_outcome": "resolved",
+      "final_message": null,
+      "attempts": [
+        "legal"
+      ],
+      "error": null
+    },
+    {
+      "id": "53",
+      "category": "missing_quantity",
+      "input_text": "晚饭吃了蒜蓉西兰花",
+      "expected_intent": "new_entry",
+      "expected_outcome": "needs_clarification",
+      "final_intent": "new_entry",
+      "final_outcome": "resolved",
+      "final_message": null,
+      "attempts": [
+        "legal"
+      ],
+      "error": null
+    },
+    {
+      "id": "61",
+      "category": "missing_raw_cooked",
+      "input_text": "中午吃了180g牛肉",
+      "expected_intent": "new_entry",
+      "expected_outcome": "needs_clarification",
+      "final_intent": "new_entry",
+      "final_outcome": "resolved",
+      "final_message": null,
+      "attempts": [
+        "legal"
+      ],
+      "error": null
+    },
+    {
+      "id": "65",
+      "category": "missing_raw_cooked",
+      "input_text": "午饭吃了100g豆腐",
+      "expected_intent": "new_entry",
+      "expected_outcome": "needs_clarification",
+      "final_intent": "new_entry",
+      "final_outcome": "resolved",
+      "final_message": null,
+      "attempts": [
+        "legal"
+      ],
+      "error": null
+    },
+    {
+      "id": "108",
+      "category": "ready_to_consume",
+      "input_text": "我吃了一罐午餐肉罐头",
+      "expected_intent": "new_entry",
+      "expected_outcome": "resolved",
+      "final_intent": "new_entry",
+      "final_outcome": "needs_clarification",
+      "final_message": "请问这罐午餐肉罐头大概有多少克？（常见规格有150g、198g、340g等）",
+      "attempts": [
+        "legal"
+      ],
+      "error": null
+    }
+  ]
+}

@@ -1,35 +1,68 @@
-"""§8.1 自然语言饮食解析(1.8)。只负责把用户文本变成结构化的食物名/克重/单位/生熟/
-餐次,不产出任何营养值(AGENTS.md 铁律)。
+"""§8.1 自然语言饮食解析(1.8,1.9 扩展 intent 两维契约)。只负责把用户文本变成结构化
+的食物名/克重/单位/生熟/餐次,不产出任何营养值(AGENTS.md 铁律)。
 
-模型自己只会声称 "resolved" 或 "needs_clarification" 两种状态——service_unavailable/
-invalid_model_output 是我们对模型"有没有守规矩"的判断,不是模型自己能报的状态。
-JSON 合法但不满足我们的 Pydantic 契约(缺字段、preparation_state 不是
+模型自己声称的是 intent(想干什么)+ status(resolved/needs_clarification 两种)——
+service_unavailable/invalid_model_output 是我们对模型"有没有守规矩"的判断,不是模型
+自己能报的状态。JSON 合法但不满足我们的 Pydantic 契约(缺字段、preparation_state 不是
 raw/cooked/ready_to_consume、数量非正数等)时自动重试一次同样的调用,重试后仍不满足
 才对外报 invalid_model_output。
+
+service_unavailable/invalid_model_output 兜底结果的 intent 固定填 new_entry:这两种
+情况下根本没拿到模型的意图判断,而调用方(handle_new_message)对"new_entry + 失败
+outcome"的处理就是把 message 当提示文案展示,语义正好符合"这次没解析成"。
 """
 
 from __future__ import annotations
 
 from pydantic import ValidationError
 
-from app.schemas.diet_parse import DietParseResult, ParsedFoodItem
+from app.schemas.diet_parse import DietParseResult, Intent, ParsedFoodItem
 from app.schemas.llm_outcome import LlmOutcome
 from app.services.llm_client import LlmClient
 
-_SYSTEM_PROMPT = """你是一个饮食记录解析助手。用户会用自然语言描述自己刚吃了什么,你要把这段话
-解析成结构化的 json,只输出一个合法的 json 对象,不要输出任何其他文字、不要用 markdown 代码块包裹。
+_SYSTEM_PROMPT = """你是一个饮食记录助手。用户会在饮食记录应用的对话框里发消息,你要先判断用户
+这句话想干什么(intent),再决定输出什么。只输出一个合法的 json 对象,不要输出任何其他文字、
+不要用 markdown 代码块包裹。
 
-输出必须是以下两种结构之一:
+用户消息里可能带有一段【今日情况】背景信息(今天到目前为止的对话记录和已确认记录的饮食
+明细)。它只用来帮你理解指代和上下文(比如"再来一份刚才那个"指什么、用户是不是在回答你
+上一轮的追问、用户说的"改"针对的是没确认的识别结果还是已记录的明细);要解析的对象永远
+只是【用户本次消息】那一条,绝不要把背景里已经记录过的食物重复解析成这次要新增的内容。
 
-1. 信息完整、可以直接记录时:
-{"status": "resolved", "meal_slot": "breakfast|lunch|dinner|other",
+第一步:判断 intent,四选一:
+- "new_entry":用户在描述自己刚吃/喝了什么,想新增一条饮食记录。
+- "correct_pending_item":用户在修正一条刚识别出来、但还没有确认写入的解析结果——典型说法
+  是"改成200g""不是生的,是熟的""刚才那个米饭其实是炒饭"这类针对刚才识别结果的修正说明。
+- "edit_existing_entry":用户想修改或删除一条已经记录进去的既有记录——比如"帮我把昨天记的
+  鸡胸肉删掉""昨天吃的东西还能改吗""把中午那条米饭改成300g"。
+- "no_log_intent":以上都不是——闲聊、寒暄、单纯问营养常识或软件用法等,没有要记录任何饮食
+  的意图。
+
+第二步:按 intent 决定输出,输出必须是以下几种结构之一:
+
+1. intent 是 "new_entry" 或 "correct_pending_item",且信息完整、可以直接记录时:
+{"intent": "new_entry 或 correct_pending_item", "status": "resolved",
+ "meal_slot": "breakfast|lunch|dinner|other",
  "items": [{"food_name": "...", "quantity": 数字(克), "unit": "g",
             "preparation_state": "raw|cooked|ready_to_consume"}, ...]}
 
-2. 信息不足,或者这句话根本不是在描述"自己刚吃了什么"时:
-{"status": "needs_clarification", "message": "给用户看的追问或说明文案"}
+2. intent 是 "new_entry" 或 "correct_pending_item",但信息不足、需要追问时:
+{"intent": "new_entry 或 correct_pending_item", "status": "needs_clarification",
+ "message": "给用户看的追问文案"}
 
-解析规则:
+3. intent 是 "edit_existing_entry" 时(不输出 status/meal_slot/items):
+{"intent": "edit_existing_entry", "message": "给用户看的回应文案"}
+   这里 message 的内容要求:用你自己的话、得体地告诉用户目前还不支持修改/删除已经记录的
+   内容,现在只能新增记录今天吃了什么。message 里写的必须是直接对用户说的话,不要把本条
+   说明照抄进去。
+
+4. intent 是 "no_log_intent" 时(不输出 status/meal_slot/items):
+{"intent": "no_log_intent", "message": "给用户看的回应文案"}
+   这里 message 的内容要求:得体自然的简短回应——可以先简短回应用户的话题(比如回答营养
+   常识问题),再自然带一句你的主要功能是帮忙记录饮食;不要硬套追问模板。message 里写的
+   必须是直接对用户说的话,不要把本条说明照抄进去。
+
+解析规则(intent 是 new_entry/correct_pending_item 时适用):
 - 你只负责把用户吃了什么解析成结构化数据,不产出任何营养数值(热量/蛋白质等一律不要输出)。
 - 数量与单位:普通食物的"一碗/一个/一份/一盘"等自然语言份量,你要凭常识直接估算成克重
   (quantity 是数字,unit 固定是 "g",不要用其他单位)。**用户的原话里必须包含具体数字
@@ -73,16 +106,28 @@ _SYSTEM_PROMPT = """你是一个饮食记录解析助手。用户会用自然语
 - meal_slot:用户提到了早餐/午饭/中午/晚饭/晚上/加餐/零食等能推断出餐次的信息,归到
   breakfast/lunch/dinner/other 对应类别(加餐/零食/说不清楚的都归 other);完全没提到餐次
   线索时,默认用 "other",不要为了问餐次单独发起追问。
-- 这句话如果根本不是在描述"刚吃了什么"(比如闲聊、单纯问营养常识但没有说自己吃了什么),
-  返回 needs_clarification,message 提示用户当前只能处理饮食记录,请描述吃了什么。
-- 当前只支持记录"今天新吃的东西",不支持追溯以前的日期,也不支持修改/删除已有记录——如果
-  用户明显是在做这些事,同样返回 needs_clarification,说明当前只支持新增今天的记录。
+- 当前只支持记录"今天新吃的东西",不支持追溯以前的日期——用户想补记以前某天吃的东西时
+  (比如"前天晚上我还吃了一碗面"),intent 仍算 "new_entry",但要返回 needs_clarification,
+  说明当前只支持记录今天吃的。注意和 "edit_existing_entry" 区分:补记以前没记的是
+  new_entry+追问;修改/删除已经记进去的才是 edit_existing_entry。
 """
 
 
 def _build_result(parsed: object) -> DietParseResult:
     if not isinstance(parsed, dict):
         raise ValueError("响应顶层不是 JSON 对象")
+
+    raw_intent = parsed.get("intent")
+    try:
+        intent = Intent(raw_intent)
+    except ValueError:
+        raise ValueError(f"未知的 intent 字段: {raw_intent!r}") from None
+
+    if intent in (Intent.NO_LOG_INTENT, Intent.EDIT_EXISTING_ENTRY):
+        message = parsed.get("message")
+        if not isinstance(message, str) or not message.strip():
+            raise ValueError(f"intent={intent.value} 响应缺少有效的 message")
+        return DietParseResult(intent=intent, message=message)
 
     status = parsed.get("status")
     if status == "resolved":
@@ -91,6 +136,7 @@ def _build_result(parsed: object) -> DietParseResult:
             raise ValueError("resolved 响应缺少合法的 items 列表")
         items = [ParsedFoodItem(**item) for item in raw_items]
         return DietParseResult(
+            intent=intent,
             outcome=LlmOutcome.RESOLVED,
             meal_slot=parsed.get("meal_slot"),
             items=items,
@@ -99,14 +145,30 @@ def _build_result(parsed: object) -> DietParseResult:
         message = parsed.get("message")
         if not isinstance(message, str) or not message.strip():
             raise ValueError("needs_clarification 响应缺少有效的 message")
-        return DietParseResult(outcome=LlmOutcome.NEEDS_CLARIFICATION, message=message)
+        return DietParseResult(
+            intent=intent, outcome=LlmOutcome.NEEDS_CLARIFICATION, message=message
+        )
     raise ValueError(f"未知的 status 字段: {status!r}")
 
 
-async def parse_diet_text(client: LlmClient, user_text: str) -> DietParseResult:
+def _build_user_message(user_text: str, today_context: str | None) -> str:
+    if not today_context:
+        return user_text
+    return (
+        "【今日情况,仅供理解背景,不是要解析的消息】\n"
+        f"{today_context}\n\n"
+        "【用户本次消息,请只解析这一条】\n"
+        f"{user_text}"
+    )
+
+
+async def parse_diet_text(
+    client: LlmClient, user_text: str, *, today_context: str | None = None
+) -> DietParseResult:
+    user_message = _build_user_message(user_text, today_context)
     last_contract_error = ""
     for attempt in range(2):  # 首次 + 一次自动重试
-        llm_result = await client.chat_json(system=_SYSTEM_PROMPT, user=user_text)
+        llm_result = await client.chat_json(system=_SYSTEM_PROMPT, user=user_message)
 
         if not llm_result.ok:
             if llm_result.error_kind == "response_not_json":
@@ -114,10 +176,12 @@ async def parse_diet_text(client: LlmClient, user_text: str) -> DietParseResult:
                 if attempt == 0:
                     continue
                 return DietParseResult(
+                    intent=Intent.NEW_ENTRY,
                     outcome=LlmOutcome.INVALID_MODEL_OUTPUT,
                     message=f"模型响应格式异常,重试后仍失败:{last_contract_error}",
                 )
             return DietParseResult(
+                intent=Intent.NEW_ENTRY,
                 outcome=LlmOutcome.SERVICE_UNAVAILABLE,
                 message="AI 服务暂时不可用,请稍后再试",
             )
@@ -129,6 +193,7 @@ async def parse_diet_text(client: LlmClient, user_text: str) -> DietParseResult:
             if attempt == 0:
                 continue
             return DietParseResult(
+                intent=Intent.NEW_ENTRY,
                 outcome=LlmOutcome.INVALID_MODEL_OUTPUT,
                 message=f"模型响应不符合契约,重试后仍失败:{last_contract_error}",
             )
