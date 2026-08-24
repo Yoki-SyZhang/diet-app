@@ -36,6 +36,7 @@ describe('App', () => {
 
     expect(recordTab).toBeInTheDocument()
     expect(boardTab).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '我的' })).toBeInTheDocument()
     expect(recordTab).toHaveAttribute('aria-selected', 'true')
     expect(boardTab).toHaveAttribute('aria-selected', 'false')
 

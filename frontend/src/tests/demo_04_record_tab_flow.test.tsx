@@ -394,7 +394,11 @@ describe('RecordTab full journey', () => {
     let resolveToday!: (r: Response) => void
     let resolvePost!: (r: Response) => void
     const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>
-    const original = fetchMock.getMockImplementation()!
+    // getMockImplementation() 的联合类型含构造签名,直接调用过不了 tsc,按用法收窄
+    const original = fetchMock.getMockImplementation() as (
+      input: RequestInfo | URL,
+      init?: RequestInit,
+    ) => Promise<Response>
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
       const path = String(input).replace('http://localhost:8000', '')
       const method = init?.method ?? 'GET'
@@ -434,7 +438,50 @@ describe('RecordTab full journey', () => {
     expect(screen.getAllByText('我吃了鸡胸肉')).toHaveLength(1)
   })
 
-  it('发送网络失败:显示发送失败提示', async () => {
+  it('发送后不等 LLM:用户气泡和"正在解析中…"立刻上屏,回执到达再替换', async () => {
+    // 解析要等好几秒;等响应回来才一起显示,用户会以为消息没发出去或程序卡了。
+    let resolvePost!: (r: Response) => void
+    const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>
+    // getMockImplementation() 的联合类型含构造签名,直接调用过不了 tsc,按用法收窄
+    const original = fetchMock.getMockImplementation() as (
+      input: RequestInfo | URL,
+      init?: RequestInit,
+    ) => Promise<Response>
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = String(input).replace('http://localhost:8000', '')
+      if (path === '/chat/messages' && init?.method === 'POST') {
+        return new Promise<Response>((res) => {
+          resolvePost = res
+        })
+      }
+      return original(input, init)
+    })
+
+    render(<RecordTab />)
+    await sendText('午饭吃了一碗米饭')
+
+    // POST 仍在飞行中
+    expect(screen.getByText('午饭吃了一碗米饭')).toBeInTheDocument()
+    expect(screen.getByText('正在解析中…')).toBeInTheDocument()
+
+    resolvePost(
+      json({
+        user_message: msg('user', '午饭吃了一碗米饭'),
+        assistant_message: msg('assistant', '大概多少克呢?'),
+        intent: 'new_entry',
+        outcome: 'needs_clarification',
+        batch_id: null,
+        items: [],
+      }),
+    )
+
+    await screen.findByText('大概多少克呢?')
+    expect(screen.queryByText('正在解析中…')).not.toBeInTheDocument()
+    // 乐观气泡被真实消息顶替,不是两条并存
+    expect(screen.getAllByText('午饭吃了一碗米饭')).toHaveLength(1)
+  })
+
+  it('发送网络失败:撤下乐观气泡,显示发送失败提示', async () => {
     render(<RecordTab />)
     const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>
     fetchMock.mockImplementationOnce(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -447,5 +494,8 @@ describe('RecordTab full journey', () => {
 
     await sendText('我吃了饭')
     expect(await screen.findByRole('alert')).toHaveTextContent('发送失败,请重试')
+    // 没记上的话不能留在屏幕上装作已发出(.claude/rules/frontend.md:不能伪成功)
+    expect(screen.queryByText('我吃了饭')).not.toBeInTheDocument()
+    expect(screen.queryByText('正在解析中…')).not.toBeInTheDocument()
   })
 })

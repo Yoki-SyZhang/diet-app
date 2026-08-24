@@ -39,7 +39,12 @@ export function MealEntryRow({ entry, disabled, onDeleteRequest }: MealEntryRowP
         disabled={disabled}
         onClick={() => onDeleteRequest(entry.id)}
       >
-        ✕
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" aria-hidden="true">
+          <path d="M2.4 3.6h9.2" strokeLinecap="round" />
+          <path d="M5.6 3.6V2.5h2.8v1.1" />
+          <path d="M3.5 3.6l.5 7.6a.9.9 0 0 0 .9.8h4.2a.9.9 0 0 0 .9-.8l.5-7.6" />
+          <path d="M6 6.2v3.6M8 6.2v3.6" strokeLinecap="round" />
+        </svg>
       </button>
     </div>
   )

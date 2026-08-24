@@ -6,7 +6,8 @@
 // - 所有项到达 confirmed/abandoned 终态 → 立刻本地解锁,再发一次性 recap(失败就
 //   放弃,不重试、不阻塞 UI);
 // - 挂载时查 open-batch,有未完成批次弹"继续/放弃"对话框;
-// - 存在未结束卡片时:今日明细删除禁用;输入框直接打字被"未确认放弃"弹窗拦截。
+// - 存在未结束卡片时:今日明细删除禁用;输入框直接打字被"未确认放弃"弹窗拦截;
+// - 发送后先挂乐观用户气泡 + "正在解析中…",拿到回执再用真实消息替换。
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type {
@@ -36,6 +37,13 @@ import { UnconfirmedGuardDialog } from '@/components/UnconfirmedGuardDialog'
 type GuardState =
   | { kind: 'unconfirmed'; text: string }
   | { kind: 'resume'; batch: OpenBatchOut }
+
+/** 还没拿到服务端回执的用户消息(乐观气泡)。解析要等 LLM 好几秒,这期间必须先把
+ *  用户自己说的话显示出来,否则看起来像没发出去。key 只用于 React 列表和撤下。 */
+interface OptimisticSend {
+  key: string
+  text: string
+}
 
 function toPendingItem(item: ConfirmableItem): PendingItem {
   return {
@@ -69,6 +77,7 @@ function mergeMessages(
 
 export function RecordTab() {
   const [messages, setMessages] = useState<ChatMessageOut[]>([])
+  const [optimistic, setOptimistic] = useState<OptimisticSend[]>([])
   const [entries, setEntries] = useState<MealEntryOut[]>([])
   const [pendingItems, setPendingItems] = useState<PendingItem[]>([])
   const [batchId, setBatchId] = useState<string | null>(null)
@@ -80,13 +89,31 @@ export function RecordTab() {
   const [guard, setGuard] = useState<GuardState | null>(null)
   // 同一张卡片生命周期里 recap 只发一次(值=已发送 recap 的 batchId)
   const recapSentRef = useRef<string | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   const hasOpenCard = pendingItems.some((item) => !isTerminal(item.uiState))
+
+  /** 收下服务端消息,并撤掉已被真实消息覆盖的乐观气泡(同内容即同一条)。
+   *  不能只靠"POST 返回时撤":挂载的今日消息 GET 可能先一步带回这条用户消息,
+   *  那时就得立刻撤,否则同一句话会并排出现两次。 */
+  const applyIncoming = useCallback((incoming: ChatMessageOut[]) => {
+    setMessages((prev) => mergeMessages(prev, incoming))
+    const settled = incoming.filter((message) => message.role === 'user').map((m) => m.content)
+    if (settled.length === 0) return
+    setOptimistic((prev) =>
+      prev.filter((item) => {
+        const at = settled.indexOf(item.text)
+        if (at === -1) return true
+        settled.splice(at, 1) // 同内容只抵消一条,连发两句一样的话不会多撤
+        return false
+      }),
+    )
+  }, [])
 
   useEffect(() => {
     let cancelled = false
     fetchTodayMessages()
-      .then((data) => !cancelled && setMessages((prev) => mergeMessages(prev, data)))
+      .then((data) => !cancelled && applyIncoming(data))
       .catch(() => {})
     fetchTodayEntries()
       .then((data) => !cancelled && setEntries(data))
@@ -101,7 +128,14 @@ export function RecordTab() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [applyIncoming])
+
+  // 新消息/新卡片出现后把对话滚到底。屏幕高度固定(手机外框),不主动滚就会出现
+  // "AI 已经答了但看不见"。用 scrollTop 赋值而不是 scrollTo:jsdom 里也能跑。
+  useEffect(() => {
+    const element = scrollRef.current
+    if (element) element.scrollTop = element.scrollHeight
+  }, [messages, optimistic, pendingItems, sendBusy])
 
   /** 全部到终态 → 清卡片(立刻解锁)+ 发一次性 recap(不等网络结果,不重试)。 */
   const finalizeBatchIfDone = useCallback(
@@ -139,23 +173,31 @@ export function RecordTab() {
     [],
   )
 
-  const doSend = useCallback(async (text: string) => {
-    setSendBusy(true)
-    setSendError(null)
-    try {
-      const resp = await sendChatMessage(text)
-      setMessages((prev) => mergeMessages(prev, [resp.user_message, resp.assistant_message]))
-      if (resp.batch_id && resp.items.length > 0) {
-        recapSentRef.current = null
-        setBatchId(resp.batch_id)
-        setPendingItems(resp.items.map(toPendingItem))
+  const doSend = useCallback(
+    async (text: string) => {
+      // 先上屏再发请求:用户气泡不等 LLM,顺序跟人的预期一致(说完就看见自己说的)
+      const key = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      setOptimistic((prev) => [...prev, { key, text }])
+      setSendBusy(true)
+      setSendError(null)
+      try {
+        const resp = await sendChatMessage(text)
+        applyIncoming([resp.user_message, resp.assistant_message])
+        if (resp.batch_id && resp.items.length > 0) {
+          recapSentRef.current = null
+          setBatchId(resp.batch_id)
+          setPendingItems(resp.items.map(toPendingItem))
+        }
+      } catch {
+        setSendError('发送失败,请重试')
+      } finally {
+        // 成功时真实消息已经顶上,失败时这条也不该留在屏幕上假装发出去了
+        setOptimistic((prev) => prev.filter((item) => item.key !== key))
+        setSendBusy(false)
       }
-    } catch {
-      setSendError('发送失败,请重试')
-    } finally {
-      setSendBusy(false)
-    }
-  }, [])
+    },
+    [applyIncoming],
+  )
 
   /** 输入框发送的三条路由规则(tasks/current.md"输入框直接打字时的判断")。 */
   const handleSend = (text: string) => {
@@ -356,33 +398,49 @@ export function RecordTab() {
 
   return (
     <div className="record-tab">
-      <TodayEntryList
-        entries={entries}
-        disabled={hasOpenCard}
-        onDelete={handleDelete}
-        deleteError={deleteError}
-      />
-      <div className="section-head">
-        <h2>对话录入</h2>
-        <span>对话历史保留 1 天</span>
+      {/* 明细卡片不在滚动流里:一直钉在最上方。展开时它盖住聊天,不挤动聊天 */}
+      <div className="record-tab__top">
+        <TodayEntryList
+          entries={entries}
+          disabled={hasOpenCard}
+          onDelete={handleDelete}
+          deleteError={deleteError}
+        />
       </div>
-      <div className="chat-list">
-        <ChatHistory messages={messages} />
-        {pendingItems.length > 0 && (
-          <ConfirmationCard
-            items={pendingItems}
-            cardBusy={cardBusy}
-            onToggleConfirm={handleToggleConfirm}
-            onToggleModify={handleToggleModify}
-            onTopConfirm={() => void handleTopConfirm()}
-            onTopAbandon={handleTopAbandon}
-          />
-        )}
-        {sendError && (
-          <div className="chat-error" role="alert">
-            {sendError}
-          </div>
-        )}
+      <div className="record-tab__scroll" ref={scrollRef}>
+        <div className="section-head">
+          <h2>对话录入</h2>
+          <span>对话历史保留 1 天</span>
+        </div>
+        <div className="chat-list">
+          <ChatHistory messages={messages} />
+          {optimistic.map((item) => (
+            <div key={item.key} className="bubble user is-sending">
+              {item.text}
+            </div>
+          ))}
+          {sendBusy && (
+            <div className="thinking" role="status">
+              <span className="thinking__dot" aria-hidden="true" />
+              正在解析中…
+            </div>
+          )}
+          {pendingItems.length > 0 && (
+            <ConfirmationCard
+              items={pendingItems}
+              cardBusy={cardBusy}
+              onToggleConfirm={handleToggleConfirm}
+              onToggleModify={handleToggleModify}
+              onTopConfirm={() => void handleTopConfirm()}
+              onTopAbandon={handleTopAbandon}
+            />
+          )}
+          {sendError && (
+            <div className="chat-error" role="alert">
+              {sendError}
+            </div>
+          )}
+        </div>
       </div>
       <ChatInputBar modifyingItem={modifyingItem} disabled={sendBusy} onSend={handleSend} />
       {guard?.kind === 'unconfirmed' && (
