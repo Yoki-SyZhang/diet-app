@@ -21,7 +21,7 @@ LLM拆解),但那是 Closed Beta 目标设计;Demo/MVP 阶段按 SPEC §7.2 里�
 
 | 业务环节                                                    | 函数/组件                                                  | 输入                                           | 输出                                      | 泳道            | 文件位置                                   |
 | ----------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------- | ----------------------------------------- | --------------- | ------------------------------------------ |
-| 自然语言解析:把一句话拆成食物名/克重/单位/生熟状态/餐次     | `parse_diet_text` `[现有]`                             | `user_text`                                  | `DietParseResult`(四态 outcome + items) | LLM             | `backend/app/services/nl_parse.py`       |
+| 自然语言解析:把一句话拆成食物名/克重/单位/生熟状态/餐次     | `parse_diet_text` `[现有]`                             | `user_text`(1.9 起可选 `today_context`)     | `DietParseResult`(intent × outcome 两维,1.9 起;items) | LLM             | `backend/app/services/nl_parse.py`       |
 | 单个食物营养估算:凭食物名+生熟状态让 LLM 给出 per-100g 营养 | `estimate_food` `[现有]`                               | `food_name`、`preparation_state`           | `FoodEstimate`(per-100g 营养 + 置信度)  | LLM             | `backend/app/services/food_estimate.py`  |
 | 一批食物并发估算                                            | `estimate_items` `[现有]`                              | `items: list[ParsedFoodItem]`、`meal_slot` | `list[ItemEstimateOutcome]`             | LLM             | `backend/app/services/food_estimate.py`  |
 | 按实际克重换算营养快照                                      | `compute_nutrient_snapshot` `[现有]`                   | `per_100g`、`quantity_g`                   | `NutrientSet`(逐字段 null 传播)         | Backend Service | `backend/app/services/nutrition_calc.py` |
@@ -33,11 +33,11 @@ LLM拆解),但那是 Closed Beta 目标设计;Demo/MVP 阶段按 SPEC §7.2 里�
 %%{init: {'themeVariables': {'fontSize': '11px'}, 'flowchart': {'nodeSpacing': 15, 'rankSpacing': 18, 'padding': 4}}}%%
 flowchart TD
     A["用户文本"] --> B["自然语言解析<br/>parse_diet_text<br/>[现有]"]
-    B --> Q{"parse_diet_text→<br/>DietParseResult.outcome"}
-    Q -->|"resolved"| C["营养估算<br/>estimate_items<br/>[现有]"]
+    B --> Q{"parse_diet_text→<br/>DietParseResult 的<br/>intent × outcome(1.9 起)"}
+    Q -->|"intent=new_entry<br/>outcome=resolved"| C["营养估算<br/>estimate_items<br/>[现有]"]
     C --> D["克重换算<br/>compute_nutrient_snapshot<br/>[现有]"]
     D --> E["确认预览<br/>ConfirmationPreview<br/>[现有]"]
-    Q -->|"needs_clarification /<br/>service_unavailable /<br/>invalid_model_output"| F["不产出,回复提示"]
+    Q -->|"其余 outcome /<br/>no_log_intent /<br/>edit_existing_entry"| F["不产出,回复提示"]
 
     classDef user fill:#F4F5F3,stroke:#8A9088,color:#1b1b1b;
     classDef service fill:#D4EADC,stroke:#2E8B62,color:#1b1b1b;
@@ -49,6 +49,8 @@ flowchart TD
 
 ## 需要考虑的错误情况
 
+- **没有记录意图/想改已有记录**(1.9 起):`intent=no_log_intent`/
+  `edit_existing_entry`,`outcome` 为 None,`message` 直接是得体回应文案。
 - **输入信息不全**:缺数量/生熟不明确 → `needs_clarification`,追问。
 - **LLM 服务不可用**:网络/超时/限流耗尽/未配置 Key → `service_unavailable`。
 - **模型输出不合规**:非法 JSON 或不满足 Pydantic 契约 → 重试一次,仍失败则
@@ -60,8 +62,8 @@ flowchart TD
 
 | 测试文件                                         | 覆盖                                         |
 | ------------------------------------------------ | -------------------------------------------- |
-| `tests/backend/test_demo_03_nl_parse.py`       | `parse_diet_text` 四态代码层正确性         |
+| `tests/backend/test_demo_03_nl_parse.py`       | `parse_diet_text` intent×outcome 代码层正确性 |
 | `tests/backend/test_demo_03_food_estimate.py`  | `estimate_food`/`estimate_items`         |
 | `tests/backend/test_demo_03_nutrition_calc.py` | `compute_nutrient_snapshot` 换算/null 传播 |
 | `tests/backend/test_demo_03_llm_client.py`     | `DashScopeClient` 失败通道                 |
-| `backend/scripts/eval_nl_parse.py`(非 pytest)  | 111 条真实评测,语义准确率                    |
+| `backend/scripts/eval_nl_parse.py`(非 pytest)  | 117 条真实评测,intent/outcome 两维准确率     |
