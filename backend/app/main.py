@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import chat, health, meal_entries
+from app.routers import chat, health, meal_entries, today
 from app.services.llm_client import create_dashscope_client
 
 
@@ -30,6 +30,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(health.router)
+    app.include_router(today.router)
     app.include_router(chat.router)
     app.include_router(meal_entries.router)
 
