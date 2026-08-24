@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { RecordTab } from './components/RecordTab'
 import { checkHealth, type HealthStatus } from './lib/health'
 
 type Tab = 'record' | 'board'
@@ -45,7 +46,7 @@ function App() {
         ))}
       </div>
       <main role="tabpanel">
-        {activeTab === 'record' ? <p>记录页(待实现)</p> : <p>看板页(待实现)</p>}
+        {activeTab === 'record' ? <RecordTab /> : <p>看板页(待实现)</p>}
       </main>
       <HealthIndicator />
     </div>
