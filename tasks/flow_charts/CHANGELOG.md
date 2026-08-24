@@ -3,6 +3,18 @@
 维护规则见 README.md 第 4 条:新增/修改/删除业务环节时在这里记一笔。格式:
 `YYYY-MM-DD` + 改了什么 + 为什么(如果不是显而易见的话)。
 
+## 2026-08-24
+
+- 1.9 代码实现完成(后端+前端测试全绿),`01_09_write_path.md` 全部
+  `[1.9计划]`/`[计划]` 改为 `[现有]`,`00_demo_overview.md` 三个 1.9 节点同步。
+- `01_09_write_path.md` 补上实现过程中新增的业务环节:修改重估 API
+  (`POST /chat/messages/modify`,此前只有服务函数没有路由行)、未完成批次恢复
+  (`find_open_batch` + `GET /chat/messages/open-batch`,新开"支线:未完成批次的
+  恢复"一节单独画图)、今日对话查询 API、`ChatHistory`/`UnconfirmedGuardDialog`
+  组件行;解析分支菱形从"四态 outcome"改为"intent × outcome 两维"(1.9 顺手
+  修掉的 1.8 契约缺陷,`no_log_intent`/`edit_existing_entry` 归入提示气泡分支)。
+- 测试映射表从"计划中 4 行"扩成实际落地的 16 个测试文件。
+
 ## 2026-08-23
 
 - 建立 flow_charts 体系:`README.md`(用途 + 维护规则)、`00_demo_overview.md`

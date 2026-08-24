@@ -18,12 +18,12 @@ Service/LLM/SQLite),不表示完成状态——完成状态看每个节点最后
 %%{init: {'themeVariables': {'fontSize': '11px'}, 'flowchart': {'nodeSpacing': 15, 'rankSpacing': 18, 'padding': 4}}}%%
 flowchart TD
     A["打开APP(1.1~1.3)<br/>frontend/src/App.tsx<br/>[现有]"] --> B
-    B["发送消息(1.9)<br/>chat_turn.py<br/>[计划]"] --> C
+    B["发送消息(1.9)<br/>chat_turn.py<br/>[现有]"] --> C
     C["自然语言解析(1.8)<br/>nl_parse.py<br/>[现有]"] --> D
     D["营养估算(1.7)<br/>food_estimate.py<br/>[现有]"] --> E
     E["克重换算,产出预览(1.6)<br/>nutrition_calc.py<br/>[现有]"] --> F
-    F["解析结果卡片(1.9)<br/>ConfirmationCard.tsx<br/>[计划]"] --> G
-    G["写入今日明细(1.9)<br/>meal_entry_write.py<br/>[计划]"] --> H
+    F["解析结果卡片(1.9)<br/>ConfirmationCard.tsx<br/>[现有]"] --> G
+    G["写入今日明细(1.9)<br/>meal_entry_write.py<br/>[现有]"] --> H
     H["每日结转(1.10)<br/>[后续,文件未定]"] --> I
     I["A1趋势柱状图(1.10)<br/>[后续,文件未定]"]
 
