@@ -6,6 +6,8 @@
 
 已完成自然语言录入、食物识别与估算、用户确认/修改及写入记录的核心闭环。最新开发进度见 `feature_demo_04_write_path`。正在做 AI 指标验收，全部达标后再转正式 PR。
 
+- Vercel Mock 演示：[https://diet-app-dusky-six.vercel.app/](https://diet-app-dusky-six.vercel.app/)
+
 ## 项目入口
 
 - 后端应用入口：[`backend/app/main.py`](backend/app/main.py)，本地 API 默认运行在 `http://localhost:8000`。
