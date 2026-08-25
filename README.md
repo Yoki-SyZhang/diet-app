@@ -16,6 +16,7 @@
 - 数据模型、业务流程和接口契约真源：[`docs/product/SPEC.md`](docs/product/SPEC.md)。
 - 前端设计规范：[`docs/design/design.md`](docs/design/design.md)。
 - 全局进度与当前计划：[`tasks/STATUS.md`](tasks/STATUS.md)、[`tasks/current.md`](tasks/current.md)。
+- 业务流程与代码映射：[`tasks/flow_charts/README.md`](tasks/flow_charts/README.md)，按核心业务流程查看需求、接口、服务与测试的对应关系。
 - 架构决策记录：[`docs/decisions/`](docs/decisions/)。
 - 仓库工作公约：[`AGENTS.md`](AGENTS.md)。
 
@@ -31,6 +32,7 @@
 - `docs/design/`：前端设计规范和设计稿资源。
 - `docs/decisions/`：关键技术与产品决策的背景和理由。
 - `tasks/`：`STATUS.md` 记录全局进度，`current.md` 记录当前步骤的细粒度计划。
+- `tasks/flow_charts/`：维护业务流程与代码实现的长期映射，便于从产品流程追溯到接口、服务和测试。
 
 ## 快速开始
 
