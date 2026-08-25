@@ -2,6 +2,10 @@
 
 单用户减脂追踪 PWA。产品以手机竖屏为主要使用形态，电脑浏览器复用同一套 UI；业务数据由私有后端持久化。
 
+### 当前状态：MVP Demo 开发中
+
+已完成自然语言录入、食物识别与估算、用户确认/修改及写入记录的核心闭环。最新开发进度见 `feature_demo_04_write_path`。正在做 AI 指标验收，全部达标后再转正式 PR。
+
 ## 项目入口
 
 - 后端应用入口：[`backend/app/main.py`](backend/app/main.py)，本地 API 默认运行在 `http://localhost:8000`。
