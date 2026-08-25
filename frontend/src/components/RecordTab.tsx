@@ -20,15 +20,19 @@ import type {
   PendingItem,
 } from '@/types/diet'
 import { TERMINAL_STATES } from '@/types/diet'
+// 数据源统一走 @/lib/api(vercel-display 的 mock/真实切换层);正式实现仍在
+// @/lib/{chat,mealEntries,today},这里只是不再直接 import 它们。
 import {
+  confirmMealEntry,
+  deleteMealEntry,
   fetchOpenBatch,
+  fetchToday,
+  fetchTodayEntries,
   fetchTodayMessages,
   sendChatMessage,
   sendModifyCorrection,
   sendRecap,
-} from '@/lib/chat'
-import { confirmMealEntry, deleteMealEntry, fetchTodayEntries } from '@/lib/mealEntries'
-import { fetchToday } from '@/lib/today'
+} from '@/lib/api'
 import { ChatHistory } from '@/components/ChatHistory'
 import { ChatInputBar } from '@/components/ChatInputBar'
 import { ConfirmationCard } from '@/components/ConfirmationCard'

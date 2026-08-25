@@ -58,6 +58,7 @@ for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/health >/dev/null && cur
 | `delete_row` | 今日明细删一行(先跑 happy 才有行) |
 | `guard` | 有未确认项时直接打字 → 拦截弹窗 → 放弃并继续 |
 | `resume_setup` → `resume` | 制造未收尾批次 → 重开页面恢复弹窗 → 继续/收尾/不再弹 |
+| `demo_mock` | **mock 演示版**闭环(不连后端、不调 LLM),见下面「Mock 演示模式」 |
 
 停止 + 清理(按端口杀,理由见 Gotchas):
 
@@ -65,6 +66,38 @@ for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/health >/dev/null && cur
 Get-NetTCPConnection -LocalPort 8000,5173 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
 Remove-Item backend/data/dietapp.dev.db -Force
 ```
+
+## Mock 演示模式(`vercel-display` 分支)
+
+演示分支上前端可以完全脱离后端跑(数据在 localStorage,不调 LLM)。**不用起 uvicorn、
+不用副本库**,验的就是 Vercel 实际托管的那份 `dist`:
+
+```bash
+cd frontend && npm run build && npm run preview      # 4173,production=mock
+```
+
+```powershell
+$env:DIETAPP_APP_URL='http://127.0.0.1:4173'
+& C:\Python\Anaconda\envs\vibe-coding\python.exe .claude\skills\run-dietapp\driver.py demo_mock
+```
+
+`demo_mock` 走完整闭环:种子数据 → 多食物识别 → 单项确认+单项改份量 → 顶部确认
+(写入+重估)→ 收尾总结 → 刷新恢复 → 删一行。全程零 console error 才算过。
+
+停服务:`Get-NetTCPConnection -LocalPort 4173 ...`(同下面「停止」那条,端口换成 4173)。
+
+实际踩到的偏差(都已修在 driver 里):
+
+- **`APP` 现在可被 `DIETAPP_APP_URL` 覆盖**,不再写死 5173。不设这个变量时行为不变。
+- **mock 没有 LLM 延迟**,识别 1 秒内就回来,但断言超时仍按 15s 给(preview 首帧+字体)。
+  别把 `LLM_TIMEOUT`(90s)套到 mock 场景上,失败时要干等一分半。
+- **`get_by_text("250g")` 会撞 strict mode**:改完份量后,数量那格和「修改:改成250g」
+  留痕行都含这个串。要断份量得用 `.confirm-item__qty`。
+- **每次 `browser.new_page()` 都是全新 context**,localStorage 是空的 → 每跑一次都从
+  种子数据开始,不用手动清。反过来说,想验「刷新后还在」必须在**同一个 page 里
+  `page.reload()`**,不能重开 page。
+- **顶栏文案是 `Mock 演示模式`**(`role="status"`),不是「已连接后端」——真实模式的
+  断言不能照搬过来。
 
 ## Run (human path)
 
@@ -74,7 +107,7 @@ Remove-Item backend/data/dietapp.dev.db -Force
 
 ```powershell
 & C:\Python\Anaconda\envs\vibe-coding\python.exe -m pytest -q          # 后端,235 passed(llm_live 默认 deselect)
-Set-Location frontend; npm test; Set-Location ..                        # 前端,37 passed
+Set-Location frontend; npm test; Set-Location ..                        # 前端,63 passed
 ```
 
 真实 LLM 冒烟(产生 API 费用):`pytest -m llm_live`。

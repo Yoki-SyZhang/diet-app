@@ -6,6 +6,11 @@
 
 import type { PendingItem } from '@/types/diet'
 import { MEAL_SLOT_LABELS, PREP_STATE_LABELS } from '@/types/diet'
+import { isDemoMode } from '@/lib/dataSource'
+
+// vercel-display:演示版没有真发生过网络估算,这行小字不能照写「网络估算」
+// (只有顶栏的「Mock 演示模式」还不够——这里是逐项声明数据是哪来的)。
+const SOURCE_BADGE = isDemoMode ? '演示估算 · 可能不准' : '网络估算 · 可能不准'
 
 function fmt(value: number | null | undefined): string {
   return value === null || value === undefined ? '—' : String(Math.round(value * 10) / 10)
@@ -78,7 +83,7 @@ export function ConfirmationCard({
                 <span className="confirm-item__qty">
                   {PREP_STATE_LABELS[parsed.preparation_state]} {preview?.quantity ?? parsed.quantity}g
                 </span>
-                <span className="confirm-item__badge">网络估算 · 可能不准</span>
+                <span className="confirm-item__badge">{SOURCE_BADGE}</span>
                 <span className="confirm-item__spacer" />
                 <span className="confirm-item__kcal">{fmt(preview?.nutrients.kcal)}</span>
                 <span className="confirm-item__unit">kcal</span>

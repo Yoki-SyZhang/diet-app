@@ -32,7 +32,9 @@ from playwright.sync_api import expect, sync_playwright  # noqa: E402
 
 SHOTS = Path(__file__).parent / "screenshots"
 SHOTS.mkdir(exist_ok=True)
-APP = "http://127.0.0.1:5173"
+# 默认是 dev 前端(5173,连真实后端)。vercel-display 的 mock 演示版跑在
+# `npm run preview` 的 4173 上,用 DIETAPP_APP_URL 指过去,见 SKILL.md「Mock 演示模式」。
+APP = os.environ.get("DIETAPP_APP_URL", "http://127.0.0.1:5173")
 LLM_TIMEOUT = 90_000  # 真实 LLM 调用(解析+逐项估算),必须放宽
 
 console_errors: list[str] = []
@@ -224,8 +226,67 @@ def scenario_resume(page) -> None:
     print("[ok] resume flow")
 
 
+def scenario_demo_mock(page) -> None:
+    """vercel-display 的 mock 演示版闭环(不连后端、不调 LLM)。
+
+    跑之前先 `npm run build && npm run preview`,并把 DIETAPP_APP_URL 指到 4173——
+    这样验的就是 Vercel 实际要托管的那份产物,不是 dev server。
+    """
+    open_app(page)
+    expect(page.get_by_role("status")).to_have_text("Mock 演示模式")
+    today = page.get_by_role("region", name="今日明细")
+    expect(today.get_by_text("水煮蛋")).to_have_count(1)  # 种子早餐
+    shot(page, "demo_01_seeded")
+
+    n0 = assistant_bubbles(page)
+    send_text(page, "午餐吃了200g米饭和一份西兰花")
+    expect(card(page)).to_be_visible(timeout=15_000)
+    assert assistant_bubbles(page) == n0 + 1, "识别播报应该只有一条"
+    rows = card(page).locator(".confirm-item")
+    assert rows.count() == 2, f"预期 2 项,实际 {rows.count()}"
+    shot(page, "demo_02_card")
+
+    # 一项直接确认,一项先改份量,验证两条支路都通
+    rows.nth(0).locator('button:has-text("确认")').click()
+    rows.nth(1).locator('button:has-text("修改")').click()
+    send_text(page, "改成250g", "确认修改")
+    top_button(page, "确认").click()
+    expect(card(page).get_by_text("已写入")).to_be_visible(timeout=15_000)
+    expect(card(page).get_by_text("重新估算中…")).to_have_count(0, timeout=15_000)
+    # 选 .confirm-item__qty 而不是 get_by_text("250g"):留痕那行「修改:改成250g」
+    # 也含这个串,strict mode 下会撞成两个元素
+    expect(card(page).locator(".confirm-item__qty").nth(1)).to_have_text("熟 250g")
+    shot(page, "demo_03_written_and_modified")
+
+    n1 = assistant_bubbles(page)
+    remaining = card(page).locator(".confirm-item", has_not=page.get_by_text("已写入"))
+    remaining.first.locator('button:has-text("确认")').click()
+    top_button(page, "确认").click()
+    expect(card(page)).to_have_count(0, timeout=15_000)
+    expect(page.locator(".bubble.assistant")).to_have_count(n1 + 1, timeout=15_000)
+    expand_today(page)
+    expect(today.get_by_text("米饭")).to_have_count(1)
+    shot(page, "demo_04_recap_and_entries")
+
+    # 刷新后数据还在(localStorage),再删一行
+    page.reload()
+    expect(page.get_by_role("region", name="今日明细")).to_be_visible(timeout=30_000)
+    page.wait_for_timeout(1500)
+    assert page.get_by_role("alertdialog").count() == 0, "已收尾批次不应再弹恢复提示"
+    expand_today(page)
+    del_buttons = today.locator('button[aria-label^="删除"]')
+    before = del_buttons.count()
+    assert before >= 3, f"刷新后应恢复出至少 3 行,实际 {before}"
+    del_buttons.first.click()
+    page.get_by_role("alertdialog").get_by_role("button", name="删除").click()
+    expect(del_buttons).to_have_count(before - 1, timeout=10_000)
+    shot(page, "demo_05_deleted_after_reload")
+    print(f"[ok] demo mock: closed loop, rows {before} -> {before - 1}")
+
+
 SCENARIOS = {
     "smoke": scenario_smoke,
+    "demo_mock": scenario_demo_mock,
     "happy": scenario_happy,
     "clarify_chitchat": scenario_clarify_chitchat,
     "delete_row": scenario_delete_row,

@@ -324,6 +324,45 @@ button:disabled {
   background: var(--color-danger);
 }
 
+/* --- vercel-display 专属:Mock 演示模式顶栏 ---------------------------------
+   顶栏是全页唯一常驻的位置,演示身份挂在这里,任何一屏都看得见;
+   琥珀色是这套配色里没被业务占用的一档,不会被当成「正常已连接」。 */
+.health--demo {
+  color: #a9702a;
+  font-weight: 500;
+}
+
+.health--demo .health__dot {
+  background: #d99a3d;
+}
+
+.demo-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.demo-bar__note {
+  font-size: 10px;
+  color: var(--color-text-empty);
+}
+
+.demo-bar__reset {
+  padding: 2px 7px;
+  border: 1px solid var(--color-caret-faint);
+  border-radius: 99px;
+  background: transparent;
+  font: inherit;
+  font-size: 10px;
+  color: var(--color-text-empty);
+  cursor: pointer;
+}
+
+.demo-bar__reset:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
 .app-body {
   flex: 1;
   min-height: 0;
