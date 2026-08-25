@@ -31,7 +31,7 @@ let memoryFallback: DemoState | null = null
  *  不直接用 `globalThis.localStorage`:Node 自带的实验性 localStorage 在没给
  *  `--localstorage-file` 时会占着这个名字但方法不可用(vitest 里就是这样,会把
  *  jsdom 那个真的挡住)。所以这里认方法不认名字,顺带覆盖掉无痕模式抛异常的情况。 */
-function storage(): Storage | null {
+export function storage(): Storage | null {
   try {
     const candidate = globalThis.window?.localStorage ?? globalThis.localStorage
     return typeof candidate?.getItem === 'function' ? candidate : null

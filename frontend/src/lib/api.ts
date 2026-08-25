@@ -42,6 +42,8 @@ import {
 import {
   checkHealth as mockCheckHealth,
   fetchToday as mockFetchToday,
+  hasSeenDemoIntro as mockHasSeenDemoIntro,
+  markDemoIntroSeen as mockMarkDemoIntroSeen,
   resetDemoData as mockResetDemoData,
 } from './mock/system'
 
@@ -68,3 +70,7 @@ export const checkHealth: () => Promise<AppHealthStatus> = isDemoMode
 
 /** 只有演示模式有意义;真实模式下是 no-op(那边的数据在 SQLite 里,不归前端清)。 */
 export const resetDemoData = isDemoMode ? mockResetDemoData : () => {}
+
+// 开场说明弹窗。真实模式下「永远看过」,弹窗压根不渲染。
+export const hasSeenDemoIntro = isDemoMode ? mockHasSeenDemoIntro : () => true
+export const markDemoIntroSeen = isDemoMode ? mockMarkDemoIntroSeen : () => {}

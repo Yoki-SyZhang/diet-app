@@ -363,6 +363,168 @@ button:disabled {
   color: var(--color-danger);
 }
 
+.demo-bar__badge {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* --- 开场说明(演示版第一屏)---------------------------------------------
+   盖满整块屏幕(含底部 Tab):它是进入演示前的说明关卡,不是普通二次确认,
+   所以 inset 是 0 而不是像 .dialog-backdrop 那样给 tabbar 让位。 */
+.intro-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 30, 25, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 40;
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 100%;
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  padding: 18px 16px 14px;
+  box-shadow: var(--shadow-float);
+}
+
+/* 内容比屏幕高是常态(390x844 竖屏),让它自己滚,按钮钉在下面不跟着滚 */
+.intro__scroll {
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.intro__badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: #fdf1e0;
+  color: #a9702a;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.intro__title {
+  margin: 8px 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.intro__lead {
+  margin: 0 0 8px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+
+.intro__lead a {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.intro__h3 {
+  margin: 14px 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.intro__foods {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.intro__foods li {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.intro__foods b {
+  color: var(--color-text);
+}
+
+/* 生/熟/即食标记。和确认卡片上那个字同一套词汇(PREP_STATE_LABELS),
+   口径不一致的话人会按错的重量填。 */
+.intro__prep {
+  flex: none;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
+  font-size: 9.5px;
+  font-style: normal;
+  font-weight: 500;
+}
+
+.intro__note {
+  margin: 8px 0 0;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--color-text-empty);
+}
+
+.intro__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.intro__list li {
+  position: relative;
+  padding-left: 16px;
+  margin-bottom: 4px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+
+.intro__list li::before {
+  position: absolute;
+  left: 0;
+  font-weight: 700;
+}
+
+.intro__list--yes li::before {
+  content: '✓';
+  color: var(--color-primary);
+}
+
+.intro__list--no li::before {
+  content: '✗';
+  color: var(--color-danger);
+}
+
+.intro__example {
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: var(--color-primary-soft);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.intro__cta {
+  flex: none;
+  margin-top: 14px;
+  width: 100%;
+  padding: 10px;
+}
+
 .app-body {
   flex: 1;
   min-height: 0;

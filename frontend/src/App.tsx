@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react'
 import { PhoneFrame } from './components/PhoneFrame'
 import { RecordTab } from './components/RecordTab'
-import { checkHealth, resetDemoData, type AppHealthStatus } from './lib/api'
+import {
+  checkHealth,
+  hasSeenDemoIntro,
+  markDemoIntroSeen,
+  resetDemoData,
+  type AppHealthStatus,
+} from './lib/api'
 import { isDemoMode } from './lib/dataSource'
+import { DemoIntroDialog } from './components/DemoIntroDialog'
 
 type Tab = 'record' | 'board' | 'mine'
 
@@ -43,13 +50,16 @@ function HealthIndicator() {
   )
 }
 
-/** 演示模式顶栏:说清「数据只在本机」,并给一条把数据玩乱后回到初始状态的路。 */
-function DemoBar() {
+/** 演示模式顶栏:说清「数据只在本机」,并给一条把数据玩乱后回到初始状态的路。
+ *  徽标本身可点击,随时重看开场说明。 */
+function DemoBar({ onOpenIntro }: { onOpenIntro: () => void }) {
   const [confirming, setConfirming] = useState(false)
 
   return (
     <div className="demo-bar">
-      <HealthIndicator />
+      <button type="button" className="demo-bar__badge" onClick={onOpenIntro} title="查看演示说明">
+        <HealthIndicator />
+      </button>
       <span className="demo-bar__note">· 数据仅存本机</span>
       <button
         type="button"
@@ -72,14 +82,21 @@ function DemoBar() {
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('record')
+  // 首次访问弹开场说明。惰性初始化,别在每次渲染都读一次 localStorage
+  const [introOpen, setIntroOpen] = useState(() => isDemoMode && !hasSeenDemoIntro())
   const current = TABS.find((tab) => tab.id === activeTab)!
+
+  const closeIntro = () => {
+    markDemoIntroSeen()
+    setIntroOpen(false)
+  }
 
   return (
     <PhoneFrame>
       <div className="app-shell">
         <header className="app-bar">
           <span className="app-bar__kicker">{current.kicker}</span>
-          {isDemoMode ? <DemoBar /> : <HealthIndicator />}
+          {isDemoMode ? <DemoBar onOpenIntro={() => setIntroOpen(true)} /> : <HealthIndicator />}
         </header>
         <main role="tabpanel" className="app-body">
           {activeTab === 'record' ? (
@@ -102,6 +119,7 @@ function App() {
             </button>
           ))}
         </nav>
+        {introOpen && <DemoIntroDialog onClose={closeIntro} />}
       </div>
     </PhoneFrame>
   )

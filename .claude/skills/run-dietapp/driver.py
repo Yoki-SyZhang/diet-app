@@ -232,6 +232,15 @@ def scenario_demo_mock(page) -> None:
     跑之前先 `npm run build && npm run preview`,并把 DIETAPP_APP_URL 指到 4173——
     这样验的就是 Vercel 实际要托管的那份产物,不是 dev server。
     """
+    page.goto(APP)
+    # 演示版首次打开会先弹开场说明(盖满整屏,不关掉点不到任何东西)
+    intro = page.get_by_role("dialog", name="Mock 演示模式说明")
+    expect(intro).to_be_visible(timeout=30_000)
+    expect(intro.get_by_text("未连接真实后端 API")).to_be_visible()
+    shot(page, "demo_00_intro")
+    page.get_by_role("button", name="开始体验").click()
+    expect(intro).to_have_count(0, timeout=5_000)
+
     open_app(page)
     expect(page.get_by_role("status")).to_have_text("Mock 演示模式")
     today = page.get_by_role("region", name="今日明细")
@@ -273,6 +282,7 @@ def scenario_demo_mock(page) -> None:
     expect(page.get_by_role("region", name="今日明细")).to_be_visible(timeout=30_000)
     page.wait_for_timeout(1500)
     assert page.get_by_role("alertdialog").count() == 0, "已收尾批次不应再弹恢复提示"
+    assert intro.count() == 0, "开场说明只在首次访问弹,刷新后不该再挡路"
     expand_today(page)
     del_buttons = today.locator('button[aria-label^="删除"]')
     before = del_buttons.count()
