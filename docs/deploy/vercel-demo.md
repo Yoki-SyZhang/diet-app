@@ -120,3 +120,27 @@ $env:DIETAPP_APP_URL='http://127.0.0.1:4173'
   `/health` 的 mock 返回 `'demo'` 而不是 `'ok'`,所以这里**不会**显示成「已连接后端」。
 - 首条助手消息说明数据只在本地、不调用真实模型。
 - 解析卡片每一项的小字是「演示估算 · 可能不准」(真实模式下才是「网络估算」)。
+
+## 首次接 Vercel 踩到的坑(2026-08-24 实测)
+
+按上面「Vercel 导入设置」走完之后卡了几次,都不是配置写错,是面板行为反直觉:
+
+- **Production Branch 不在 Settings → Git 里**。新版面板挪到了
+  **Settings → Environments → Production → Branch Tracking**。Git 页只有仓库连接、
+  PR 评论、deployment_status 之类的开关。
+- **Redeploy 不会换分支**。弹窗原话是「same source code as your current one but with
+  the latest Project Settings」——它只重建**同一个 commit**,用来让改过的 Root
+  Directory 之类生效,不是用来切分支的。指望它把生产环境换到 `vercel-display` 会
+  一直拿到旧代码。
+- **建项目之前 push 的分支不会被自动构建**。Vercel 只监听接上 Git 之后发生的 push。
+  症状:Deployments 里按分支名过滤显示 **No Results**,但列表顶部有一条
+  「Branch link for vercel-display」——那只是个分支别名 URL,不是部署,点进去会回落
+  到当前生产部署(也就是 `main` 的构建)。
+  解法二选一:往该分支再推一个 commit 触发构建;或者等有了该分支的部署之后,在
+  Deployments 里对它 **⋯ → Promote to Production**。
+- **怎么一眼认出「拿到的是 main 而不是演示版」**:`main` 只有「记录/看板」两个 Tab
+  且记录页写着「记录页(待实现)」(1.9 写入路径在 `feature_demo_04`,从没合进 main);
+  演示版是三个 Tab、顶栏琥珀色「Mock 演示模式」。看到「无法连接后端」基本就是
+  构建到 `main` 了。
+- **Root Directory 配错会直接构建失败**,不会静默出错——仓库根没有 `package.json`。
+  所以只要页面能打开,这一项就是对的。
